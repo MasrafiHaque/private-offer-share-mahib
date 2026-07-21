@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Private Offer Share — সেরা ডিল, সেরা দামে</title>
+<meta name="description" content="Private Offer Share — Daraz-এর সেরা প্রোডাক্ট, সেরা দামে। আমাদের Telegram Channel-এ যোগ দিন এক্সক্লুসিভ ডিলের জন্য।">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&family=Poppins:wght@700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="css/style.css">
+<link rel="icon" href="assets/images/logo.png" type="image/png">
+</head>
+<body>
+
+<!-- ============ HEADER ============ -->
+<header class="site-header">
+  <div class="header-inner">
+    <a href="#" class="logo"><img src="assets/images/logo.png" alt="Private Offer Share" class="logo-img"><span class="logo-text">Private Offer <em>Share</em></span></a>
+    <div class="search-bar">
+      <i class="fas fa-search" style="color:var(--text-muted); margin-right:0.5rem;"></i>
+      <input type="text" id="searchInput" placeholder="প্রোডাক্ট খুঁজুন...">
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" id="themeToggleBtn" title="Dark/Light Mode">🌙</button>
+      <button class="btn btn-primary" id="loginBtnHeader" onclick="openAuthModal('login')">Login</button>
+      <button class="icon-btn" id="userBtnHeader" style="display:none;" onclick="logout()" title="Logout">
+        <i class="fas fa-user"></i>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- ============ HERO ============ -->
+<section class="hero">
+  <div class="hero-inner">
+    <div>
+      <span class="hero-eyebrow">আজকের সেরা ডিল</span>
+      <h1>প্রতিদিনের প্রয়োজনে <em>সেরা দাম</em>, এক জায়গায়</h1>
+      <p>Daraz-এর হাজারো প্রোডাক্ট থেকে বাছাই করা সেরা ডিলগুলো আমরা প্রতিদিন আপনার জন্য নিয়ে আসি। এখনই ব্রাউজ করুন, পছন্দেরটা কিনুন।</p>
+      <div class="hero-actions">
+        <a href="#products" class="btn btn-primary">প্রোডাক্ট দেখুন</a>
+        <a href="#" class="btn btn-outline" onclick="window.open(TELEGRAM_LINK,'_blank'); trackTelegramClick('hero'); return false;">
+          <i class="fab fa-telegram"></i> Telegram Join করুন
+        </a>
+      </div>
+    </div>
+    <div class="hero-visual"><span class="hero-visual-bag">🛍️</span></div>
+  </div>
+</section>
+
+<!-- ============ CATEGORIES ============ -->
+<nav class="categories" id="categoryStrip"></nav>
+
+<!-- ============ PRODUCTS ============ -->
+<h2 class="section-title" id="products">🔥 সব প্রোডাক্ট</h2>
+<div class="product-grid" id="productGrid"></div>
+
+<!-- ============ FOOTER ============ -->
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div style="display:flex;align-items:center;gap:.5rem;">
+      <img src="assets/images/logo.png" alt="Private Offer Share" style="width:22px;height:22px;object-fit:contain;">
+      © <span id="year"></span> Private Offer Share — Daraz Affiliate Partner
+    </div>
+    <div><a href="#" onclick="window.open(TELEGRAM_LINK,'_blank'); return false;"><i class="fab fa-telegram"></i> Telegram Channel</a></div>
+  </div>
+</footer>
+
+<button class="back-to-top" id="backToTopBtn">↑</button>
+
+<!-- ============ TELEGRAM POPUP ============ -->
+<div class="modal-overlay" id="telegramModalOverlay">
+  <div class="modal-box telegram-modal">
+    <button class="modal-close" id="telegramCloseBtn">&times;</button>
+    <h2>🚀 এক্সক্লুসিভ ডিল Telegram-এ!</h2>
+    <p>আমাদের Telegram Channel-এ Join করে পাবেন:</p>
+    <ul>
+      <li>🔥 ফ্ল্যাশ সেল অ্যালার্ট</li>
+      <li>💰 সেরা দামের ডিল</li>
+      <li>🎁 এক্সক্লুসিভ ভাউচার</li>
+    </ul>
+    <button class="btn btn-primary" id="telegramJoinBtn"><i class="fab fa-telegram"></i> Telegram Channel Join করুন</button>
+    <button class="btn btn-ghost" id="telegramSkipBtn">পরে করবো</button>
+  </div>
+</div>
+
+<!-- ============ AUTH MODAL ============ -->
+<div class="modal-overlay" id="authModalOverlay">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeAuthModal()">&times;</button>
+    <div class="auth-tabs">
+      <button class="auth-tab active" data-mode="login" onclick="setAuthTab('login')">Login</button>
+      <button class="auth-tab" data-mode="signup" onclick="setAuthTab('signup')">Sign Up</button>
+    </div>
+    <div class="auth-method-switch">
+      <button class="active" data-method="email" onclick="setAuthMethod('email')"><i class="fas fa-envelope"></i> Email</button>
+      <button data-method="phone" onclick="setAuthMethod('phone')"><i class="fas fa-phone"></i> Phone</button>
+    </div>
+    <form id="authForm" data-mode="login" data-method="email">
+      <div class="form-group" id="nameField" style="display:none;">
+        <label>নাম</label>
+        <input type="text" id="nameInput" placeholder="আপনার নাম">
+      </div>
+      <div class="form-group" id="emailField">
+        <label>Email</label>
+        <input type="email" id="emailInput" placeholder="you@example.com">
+      </div>
+      <div class="form-group" id="passwordField">
+        <label>Password</label>
+        <input type="password" id="passwordInput" placeholder="••••••••">
+      </div>
+      <div class="form-group" id="phoneField" style="display:none;">
+        <label>ফোন নম্বর (Country Code সহ)</label>
+        <input type="tel" id="phoneInput" placeholder="+8801XXXXXXXXX">
+      </div>
+      <div class="form-group" id="otpField" style="display:none;">
+        <label>OTP Code</label>
+        <input type="text" id="otpInput" placeholder="৬ ডিজিটের কোড">
+      </div>
+      <div id="recaptcha-container"></div>
+      <button type="submit" class="btn btn-primary auth-submit" id="authSubmitBtn">লগইন করুন</button>
+      <div class="auth-error" id="authError"></div>
+    </form>
+  </div>
+</div>
+
+<!-- ============ SCRIPTS ============ -->
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+<script src="js/firebase-config.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/analytics.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/main.js"></script>
+<script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+</body>
+</html>
