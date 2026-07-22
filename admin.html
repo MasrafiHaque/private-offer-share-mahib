@@ -190,6 +190,22 @@ tr:hover td{background:var(--panel-2);}
         <div class="stat-card"><div class="icon">🆕</div><h3>New Users (Today)</h3><div class="value" id="statNewUsers">–</div></div>
       </div>
       <div class="chart-box"><h3>Weekly Traffic (Visits)</h3><canvas id="trafficChart"></canvas></div>
+
+      <div class="chart-box">
+        <h3 style="margin:0 0 .6rem;">💰 Daraz Price Auto-Update</h3>
+        <div style="font-size:.85rem;color:var(--text-muted);margin-bottom:.8rem;">
+          প্রতিদিন রাত ৩টায় স্বয়ংক্রিয়ভাবে চলে। এখনই চালাতে চাইলে
+          <a href="https://github.com/MasrafiHaque/private-offer-share-mahib/actions/workflows/update-prices.yml" target="_blank" style="color:var(--gold);">GitHub Actions-এ গিয়ে "Run workflow"</a> চাপুন — নিচে তার Progress লাইভ দেখাবে।
+        </div>
+        <div id="updateStatusBadge" style="margin-bottom:.6rem;font-size:.85rem;color:var(--text-muted);">এখনো কোনো Update চালানো হয়নি।</div>
+        <div id="updateProgressWrap" style="display:none;margin-bottom:.6rem;">
+          <div style="background:var(--panel-2);border-radius:6px;overflow:hidden;height:8px;">
+            <div id="updateProgressBar" style="height:100%;width:0%;background:linear-gradient(135deg,var(--gold),var(--orange));transition:width .3s;"></div>
+          </div>
+          <div style="font-size:.78rem;color:var(--text-muted);margin-top:.3rem;" id="updateProgressText"></div>
+        </div>
+        <pre id="updateLogPanel" style="background:#0b0b0c;border:1px solid var(--border);border-radius:8px;padding:.9rem;max-height:280px;overflow-y:auto;font-size:.8rem;line-height:1.6;white-space:pre-wrap;word-break:break-word;color:#c9c9c9;margin:0;">এখানে Log দেখানো হবে যখন Update চালানো হবে।</pre>
+      </div>
     </div>
 
     <!-- Products -->
@@ -372,6 +388,7 @@ auth.onAuthStateChanged(async (user) => {
   loadProducts();
   loadUsers();
   loadSettings();
+  startAutomationStatusListener();
 });
 
 async function adminLogin() {
@@ -410,6 +427,51 @@ async function makeMeAdmin() {
   }
 }
 function adminLogout() { auth.signOut(); location.reload(); }
+
+/* ---------- Price Auto-Update — Live Log (Read-only Listener) ----------
+   Trigger এখনো GitHub Actions-এর "Run workflow" বাটন দিয়ে ম্যানুয়ালি অথবা
+   Daily Cron দিয়ে হয় — এখানে শুধু তার Progress লাইভ দেখানো হয়। */
+let automationStatusUnsub = null;
+
+function startAutomationStatusListener() {
+  if (automationStatusUnsub) return;
+  automationStatusUnsub = db.collection("automationStatus").doc("latest").onSnapshot((doc) => {
+    if (!doc.exists) return;
+    renderAutomationStatus(doc.data());
+  });
+}
+
+function renderAutomationStatus(data) {
+  const badge = document.getElementById("updateStatusBadge");
+  const progressWrap = document.getElementById("updateProgressWrap");
+  const progressBar = document.getElementById("updateProgressBar");
+  const progressText = document.getElementById("updateProgressText");
+  const logPanel = document.getElementById("updateLogPanel");
+  if (!badge) return;
+
+  const statusLabels = {
+    queued: "🟡 শুরু হচ্ছে...",
+    running: "🔵 চলছে...",
+    completed: "✅ শেষ হয়েছে",
+    failed: "❌ ব্যর্থ হয়েছে"
+  };
+  badge.textContent = statusLabels[data.status] || data.status || "—";
+
+  if (data.totalProducts > 0) {
+    progressWrap.style.display = "block";
+    const pct = Math.round(((data.processedCount || 0) / data.totalProducts) * 100);
+    progressBar.style.width = pct + "%";
+    progressText.textContent = `${data.processedCount || 0} / ${data.totalProducts} Product Check হয়েছে`;
+  } else {
+    progressWrap.style.display = "none";
+  }
+
+  if (Array.isArray(data.logs) && data.logs.length > 0) {
+    logPanel.textContent = data.logs.join("\n");
+    logPanel.scrollTop = logPanel.scrollHeight;
+  }
+}
+
 
 function initAdminTheme() {
   const saved = localStorage.getItem("dn_admin_theme") || "dark";

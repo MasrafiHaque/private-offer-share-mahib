@@ -6,13 +6,12 @@
 
 // 🔑 Firebase Console → Project Settings → General → Your apps থেকে কপি করুন
 const firebaseConfig = {
-  apiKey: "AIzaSyDnM5m1qtBenYl0e6oZDnCI7ZLqBmI9WwM",
-  authDomain: "daraz-affiliate-36b5f.firebaseapp.com",
-  projectId: "daraz-affiliate-36b5f",
-  storageBucket: "daraz-affiliate-36b5f.firebasestorage.app",
-  messagingSenderId: "226784335507",
-  appId: "1:226784335507:web:95a2c8af248c94b7bc5f66",
-  measurementId: "G-BNL93LBRH2"
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_PROJECT_ID.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -28,7 +27,7 @@ db.enablePersistence({ synchronizeTabs: true }).catch(() => {
 // 🖼️ Cloudinary Console → Dashboard থেকে Cloud Name নিন
 // এবং Settings → Upload → Add Upload Preset (Signing Mode: Unsigned) থেকে Preset তৈরি করুন
 const cloudinaryConfig = {
-  cloudName: "dbrrxrbb9",
+  cloudName: "YOUR_CLOUD_NAME",
   uploadPreset: "daraz_products"
 };
 

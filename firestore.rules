@@ -85,6 +85,12 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    // ---------- AUTOMATION STATUS (Price Update Progress) ----------
+    match /automationStatus/{doc} {
+      allow read: if isAdmin();
+      allow write: if false; // শুধু Admin SDK (Cloud Function / GitHub Action) লিখতে পারবে
+    }
+
     // ---------- DEFAULT DENY ----------
     match /{document=**} {
       allow read, write: if false;
