@@ -1,0 +1,13 @@
+{
+  "name": "private-offer-share-automation",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Daily Daraz price-tracking automation for the Private Offer Share website. The website itself is plain HTML/CSS/JS and needs no build step — these dependencies are only for the GitHub Actions automation scripts under /scripts.",
+  "scripts": {
+    "update-prices": "node scripts/update-all-prices.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.1.0",
+    "playwright": "^1.45.0"
+  }
+}

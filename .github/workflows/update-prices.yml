@@ -1,0 +1,31 @@
+name: Daily Daraz Price Update
+
+on:
+  schedule:
+    # UTC সময়ে লেখা হয় — 21:00 UTC = রাত ৩:০০টা বাংলাদেশ সময় (UTC+6)
+    - cron: "0 21 * * *"
+  workflow_dispatch: {} # চাইলে Manually-ও Run করা যাবে (Testing-এর জন্য সুবিধাজনক)
+
+jobs:
+  update-prices:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run daily price update
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: node scripts/update-all-prices.js
