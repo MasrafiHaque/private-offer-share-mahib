@@ -203,8 +203,8 @@ tr:hover td{background:var(--panel-2);}
       </div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th></th><th>নাম</th><th>দাম</th><th>Category</th><th>Clicks</th><th>Status</th><th>Actions</th></tr></thead>
-          <tbody id="productsTable"><tr class="empty-row"><td colspan="7">Loading...</td></tr></tbody>
+          <thead><tr><th></th><th>নাম</th><th>দাম</th><th>Category</th><th>Auto-Track</th><th>Clicks</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="productsTable"><tr class="empty-row"><td colspan="8">Loading...</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -289,6 +289,18 @@ tr:hover td{background:var(--panel-2);}
         <div class="form-group"><label>Status</label><select id="productStatus"><option value="active">Active</option><option value="inactive">Inactive</option></select></div>
       </div>
       <div class="form-group"><label>Affiliate Link (Daraz) *</label><input type="url" id="affiliateLink" required></div>
+      <div class="form-group">
+        <label>Daraz Product Link (Price Auto-Check-এর জন্য)</label>
+        <input type="url" id="darazUrl" placeholder="https://www.daraz.com.bd/products/...">
+      </div>
+      <div class="form-group" style="display:flex;align-items:center;gap:.6rem;">
+        <input type="checkbox" id="autoTrackPrice" style="width:auto;">
+        <label style="margin:0;" for="autoTrackPrice">এই Product-এর দাম Daily Auto-Update হবে</label>
+      </div>
+      <div class="form-group" id="lastCheckedInfo" style="display:none;">
+        <label>শেষ Check</label>
+        <div style="font-size:.85rem;color:var(--text-muted);" id="lastCheckedText">—</div>
+      </div>
       <div class="form-group"><label>বিবরণ</label><textarea id="productDescription" rows="3"></textarea></div>
       <button type="submit" class="btn btn-primary" style="width:100%;">💾 Save Product</button>
     </form>
@@ -515,27 +527,40 @@ function loadProducts() {
     productsCache = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
     renderProductsTable();
   }, (err) => {
-    document.getElementById("productsTable").innerHTML = `<tr class="empty-row"><td colspan="7">লোড করতে সমস্যা: ${err.message}</td></tr>`;
+    document.getElementById("productsTable").innerHTML = `<tr class="empty-row"><td colspan="8">লোড করতে সমস্যা: ${err.message}</td></tr>`;
   });
 }
 function renderProductsTable() {
   const q = (document.getElementById("productSearch")?.value || "").toLowerCase();
   const list = productsCache.filter((p) => (p.name || "").toLowerCase().includes(q));
   const tbody = document.getElementById("productsTable");
-  if (list.length === 0) { tbody.innerHTML = `<tr class="empty-row"><td colspan="7">কোনো প্রোডাক্ট নেই</td></tr>`; return; }
-  tbody.innerHTML = list.map((p) => `
+  if (list.length === 0) { tbody.innerHTML = `<tr class="empty-row"><td colspan="8">কোনো প্রোডাক্ট নেই</td></tr>`; return; }
+  tbody.innerHTML = list.map((p) => {
+    let trackBadge = `<span class="badge" style="background:rgba(156,163,175,.18);color:var(--text-muted);">Off</span>`;
+    if (p.autoTrackPrice) {
+      if (p.lastCheckStatus === "failed") {
+        trackBadge = `<span class="badge badge-banned" title="${escapeHTML(p.lastCheckError || "")}">On · ব্যর্থ</span>`;
+      } else if (p.lastCheckStatus === "success") {
+        trackBadge = `<span class="badge badge-active">On · ঠিক আছে</span>`;
+      } else {
+        trackBadge = `<span class="badge badge-admin">On · এখনো Check হয়নি</span>`;
+      }
+    }
+    return `
     <tr>
       <td><img class="thumb" src="${p.image || 'assets/images/empty-box.svg'}" onerror="this.src='assets/images/empty-box.svg'"></td>
       <td>${escapeHTML(p.name)}</td>
       <td>${formatPrice(p.currentPrice)}</td>
       <td>${escapeHTML(categoriesCache.find((c) => c.id === p.category)?.name || "—")}</td>
+      <td>${trackBadge}</td>
       <td>${p.clickCount || 0}</td>
       <td><span class="badge ${p.status === "active" ? "badge-active" : "badge-inactive"}">${p.status || "active"}</span></td>
       <td>
         <button class="btn btn-outline btn-sm" onclick="editProduct('${p.id}')"><i class="fas fa-edit"></i></button>
         <button class="btn btn-danger btn-sm" onclick="deleteProduct('${p.id}')"><i class="fas fa-trash"></i></button>
       </td>
-    </tr>`).join("");
+    </tr>`;
+  }).join("");
 }
 document.addEventListener("input", (e) => { if (e.target.id === "productSearch") renderProductsTable(); });
 
@@ -547,6 +572,7 @@ function openProductModal() {
   document.getElementById("productId").value = "";
   document.getElementById("productModalTitle").textContent = "Add Product";
   document.getElementById("imgPreviewWrap").innerHTML = "";
+  document.getElementById("lastCheckedInfo").style.display = "none";
   uploadedImageUrl = "";
   populateCategorySelect();
   openModal("productModal");
@@ -563,9 +589,21 @@ function editProduct(id) {
   document.getElementById("productCategory").value = p.category || "";
   document.getElementById("productStatus").value = p.status || "active";
   document.getElementById("affiliateLink").value = p.affiliateLink || "";
+  document.getElementById("darazUrl").value = p.darazUrl || "";
+  document.getElementById("autoTrackPrice").checked = !!p.autoTrackPrice;
   document.getElementById("productDescription").value = p.description || "";
   uploadedImageUrl = p.image || "";
   document.getElementById("imgPreviewWrap").innerHTML = uploadedImageUrl ? `<img src="${uploadedImageUrl}">` : "";
+
+  const lastCheckedInfo = document.getElementById("lastCheckedInfo");
+  if (p.lastChecked) {
+    const dt = p.lastChecked.toDate ? p.lastChecked.toDate() : null;
+    const statusText = p.lastCheckStatus === "failed" ? `ব্যর্থ — ${p.lastCheckError || ""}` : "সফল";
+    document.getElementById("lastCheckedText").textContent = `${dt ? dt.toLocaleString("bn-BD") : "—"} · ${statusText}`;
+    lastCheckedInfo.style.display = "block";
+  } else {
+    lastCheckedInfo.style.display = "none";
+  }
   openModal("productModal");
 }
 async function deleteProduct(id) {
@@ -610,6 +648,8 @@ document.getElementById("productForm").addEventListener("submit", async (e) => {
     category: document.getElementById("productCategory").value || null,
     status: document.getElementById("productStatus").value,
     affiliateLink: document.getElementById("affiliateLink").value.trim(),
+    darazUrl: document.getElementById("darazUrl").value.trim() || null,
+    autoTrackPrice: document.getElementById("autoTrackPrice").checked,
     description: document.getElementById("productDescription").value.trim(),
     image: uploadedImageUrl || null,
     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
