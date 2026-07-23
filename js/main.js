@@ -1,6 +1,6 @@
 /* ============================================
    Main Site Logic
-   (Updated: Fixed Source Filter & Theme)
+   (Updated: Fixed Source Filter, Theme & Maintenance Mode)
    ============================================ */
 
 let allProducts = [];
@@ -13,7 +13,10 @@ let enabledSources = [];
 document.addEventListener("DOMContentLoaded", () => {
   console.log("DOM loaded, initializing...");
   
-  // Theme initialize (সবার আগে)
+  // ✅ Maintenance Mode Check (সবার আগে)
+  checkMaintenanceMode();
+  
+  // Theme initialize
   initTheme();
   
   // Theme toggle button
@@ -61,6 +64,56 @@ document.addEventListener("DOMContentLoaded", () => {
   
   console.log("Initialization complete");
 });
+
+/* ---------- Maintenance Mode ---------- */
+async function checkMaintenanceMode() {
+  try {
+    const doc = await db.collection("siteSettings").doc("maintenance").get();
+    if (doc.exists && doc.data().enabled === true) {
+      const settings = doc.data();
+      showMaintenancePage(settings);
+      // Maintenance mode ON থাকলে অন্য কিছু লোড করার দরকার নেই
+      return true;
+    }
+    return false;
+  } catch (e) {
+    console.error("Maintenance check error:", e);
+    return false;
+  }
+}
+
+function showMaintenancePage(settings) {
+  const title = settings.title || "আমরা শীঘ্রই ফিরছি! 🚧";
+  const message = settings.message || "আমরা সাইটটি আরও ভালোভাবে সাজানোর জন্য কাজ করছি। কিছুক্ষণ পর আবার ভিজিট করুন।";
+  const estimatedTime = settings.estimatedTime || "কাজ চলছে...";
+  const telegramLink = settings.telegramLink || TELEGRAM_LINK || "#";
+  
+  const maintenanceHTML = `
+    <div class="maintenance-overlay" id="maintenanceOverlay">
+      <div class="maintenance-card">
+        <div class="maintenance-icon">🛠️</div>
+        <h1>${escapeHTML(title)}</h1>
+        <p>${escapeHTML(message)}</p>
+        <div class="estimated-time">
+          <i class="fas fa-clock"></i> ${escapeHTML(estimatedTime)}
+        </div>
+        <div class="social-links">
+          ${telegramLink !== '#' ? `
+            <a href="${telegramLink}" target="_blank" title="Telegram">
+              <i class="fab fa-telegram-plane"></i>
+            </a>
+          ` : ''}
+          <a href="mailto:support@privateoffershare.com" title="Email">
+            <i class="fas fa-envelope"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  // Body এর শেষে maintenance overlay add
+  document.body.insertAdjacentHTML('beforeend', maintenanceHTML);
+}
 
 /* ---------- Site Settings Load ---------- */
 async function loadSiteSettings() {
@@ -138,22 +191,18 @@ function renderProducts() {
   
   let list = allProducts;
 
-  // Source filter
   if (enabledSources.length > 0) {
     list = list.filter((p) => enabledSources.includes(p.source || "daraz"));
   }
 
-  // Active source tab filter
   if (activeSource !== "all") {
     list = list.filter((p) => p.source === activeSource);
   }
 
-  // Category filter
   if (activeCategory !== "all") {
     list = list.filter((p) => p.category === activeCategory);
   }
 
-  // Search filter
   if (searchQuery) {
     list = list.filter((p) => (p.name || "").toLowerCase().includes(searchQuery));
   }
@@ -177,19 +226,16 @@ function productCardHTML(p) {
       : 0;
   const img = p.image || "assets/images/empty-box.svg";
 
-  // Source Badge
   const sourceBadge = `
     <span class="source-badge ${getSourceBadgeClass(source)}">
       ${getSourceLabel(source)}
     </span>
   `;
 
-  // Discount Badge
   const discountBadge = discount > 0 
     ? `<span class="discount-badge">-${discount}%</span>` 
     : "";
 
-  // Action Buttons
   let actionButtons = "";
   
   if (source === "daraz") {

@@ -331,14 +331,48 @@ pre{background:#0b0b0c;border:1px solid var(--border);border-radius:8px;padding:
     </div>
 
     <!-- Settings -->
-    <div class="page" id="page-settings">
+<div class="page" id="page-settings">
       <div class="page-header"><h1>⚙️ Site Settings</h1></div>
-      <div class="table-wrap" style="padding:1.3rem;max-width:550px;">
+      
+      <!-- General Settings -->
+      <div class="table-wrap" style="padding:1.3rem;max-width:550px;margin-bottom:1.5rem;">
+        <h3 style="margin-bottom:1rem;font-size:1rem;">📝 General Settings</h3>
         <form id="settingsForm">
           <div class="form-group"><label>Banner Title (HTML supported)</label><input type="text" id="bannerTitle"></div>
           <div class="form-group"><label>Banner Subtitle</label><input type="text" id="bannerSubtitle"></div>
           <div class="form-group"><label>Telegram Channel Link</label><input type="url" id="telegramLinkInput" placeholder="https://t.me/yourchannel"></div>
           <button type="submit" class="btn btn-primary" style="width:100%;">💾 Save Settings</button>
+        </form>
+      </div>
+
+      <!-- Maintenance Mode Settings -->
+      <div class="table-wrap" style="padding:1.3rem;max-width:550px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+          <h3 style="margin:0;font-size:1rem;">🔧 Maintenance Mode</h3>
+          <label class="toggle-switch">
+            <input type="checkbox" id="maintenanceToggle" onchange="toggleMaintenanceMode(this.checked)">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <p style="font-size:.82rem;color:var(--text-muted);margin-bottom:1rem;">Maintenance Mode চালু করলে পুরো ওয়েবসাইটে একটি "শীঘ্রই ফিরছি" পেজ দেখাবে। অ্যাডমিন প্যানেল স্বাভাবিকভাবেই কাজ করবে।</p>
+        <form id="maintenanceForm">
+          <div class="form-group">
+            <label>Maintenance Title</label>
+            <input type="text" id="maintenanceTitle" placeholder="আমরা শীঘ্রই ফিরছি! 🚧">
+          </div>
+          <div class="form-group">
+            <label>Maintenance Message</label>
+            <textarea id="maintenanceMessage" rows="3" placeholder="আমরা সাইটটি আরও ভালোভাবে সাজানোর জন্য কাজ করছি। কিছুক্ষণ পর আবার ভিজিট করুন।"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Estimated Time (যেমন: "আজ রাত ১০টার মধ্যে", "২ ঘণ্টার মধ্যে")</label>
+            <input type="text" id="maintenanceEstimatedTime" placeholder="কাজ চলছে...">
+          </div>
+          <div class="form-group">
+            <label>Telegram Link (Optional)</label>
+            <input type="url" id="maintenanceTelegramLink" placeholder="https://t.me/yourchannel">
+          </div>
+          <button type="submit" class="btn btn-primary" style="width:100%;">💾 Save Maintenance Settings</button>
         </form>
       </div>
     </div>
@@ -1072,7 +1106,11 @@ async function loadSettings() {
   document.getElementById("bannerTitle").value = s.bannerTitle || "প্রতিদিনের প্রয়োজনে <em>সেরা দাম</em>, এক জায়গায়";
   document.getElementById("bannerSubtitle").value = s.bannerSubtitle || "Daraz সহ আরও অনেক প্রতিষ্ঠানের বাছাই করা সেরা ডিলগুলো আমরা প্রতিদিন আপনার জন্য নিয়ে আসি।";
   document.getElementById("telegramLinkInput").value = s.telegramLink || TELEGRAM_LINK || "";
+  
+  // ✅ Maintenance settings load
+  loadMaintenanceSettings();
 }
+
 document.getElementById("settingsForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   try {
@@ -1086,12 +1124,108 @@ document.getElementById("settingsForm").addEventListener("submit", async (e) => 
   } catch (err) { showToast("সমস্যা: " + err.message, "error"); }
 });
 
+// Maintenance Form Submit
+document.getElementById("maintenanceForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  try {
+    await db.collection("siteSettings").doc("maintenance").set({
+      title: document.getElementById("maintenanceTitle").value.trim(),
+      message: document.getElementById("maintenanceMessage").value.trim(),
+      estimatedTime: document.getElementById("maintenanceEstimatedTime").value.trim(),
+      telegramLink: document.getElementById("maintenanceTelegramLink").value.trim(),
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+    showToast("✅ Maintenance Settings Save হয়েছে");
+  } catch (err) { showToast("সমস্যা: " + err.message, "error"); }
+});
+
+/* ---------- Maintenance Mode Functions ---------- */
+async function loadMaintenanceSettings() {
+  try {
+    const doc = await db.collection("siteSettings").doc("maintenance").get();
+    if (doc.exists) {
+      const s = doc.data();
+      document.getElementById("maintenanceToggle").checked = s.enabled || false;
+      document.getElementById("maintenanceTitle").value = s.title || "";
+      document.getElementById("maintenanceMessage").value = s.message || "";
+      document.getElementById("maintenanceEstimatedTime").value = s.estimatedTime || "";
+      document.getElementById("maintenanceTelegramLink").value = s.telegramLink || "";
+    }
+  } catch (e) {
+    console.error("Load maintenance settings error:", e);
+  }
+}
+
+async function toggleMaintenanceMode(enabled) {
+  try {
+    await db.collection("siteSettings").doc("maintenance").set(
+      { 
+        enabled, 
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp() 
+      },
+      { merge: true }
+    );
+    showToast(enabled ? "🔧 Maintenance Mode চালু হয়েছে" : "✅ Maintenance Mode বন্ধ হয়েছে");
+  } catch (e) {
+    showToast("Error: " + e.message, "error");
+  }
+}
 // Search listeners
 document.addEventListener("input", (e) => {
   if (e.target.id === "productSearch") renderProductsTable();
   if (e.target.id === "userSearch") renderUsersTable();
 });
 document.getElementById("productSourceFilter")?.addEventListener("change", renderProductsTable);
+
+/* ---------- Maintenance Mode Functions ---------- */
+async function loadMaintenanceSettings() {
+  try {
+    const doc = await db.collection("siteSettings").doc("maintenance").get();
+    if (doc.exists) {
+      const s = doc.data();
+      document.getElementById("maintenanceToggle").checked = s.enabled || false;
+      document.getElementById("maintenanceTitle").value = s.title || "";
+      document.getElementById("maintenanceMessage").value = s.message || "";
+      document.getElementById("maintenanceEstimatedTime").value = s.estimatedTime || "";
+      document.getElementById("maintenanceTelegramLink").value = s.telegramLink || "";
+    }
+  } catch (e) {
+    console.error("Load maintenance settings error:", e);
+  }
+}
+
+async function toggleMaintenanceMode(enabled) {
+  try {
+    await db.collection("siteSettings").doc("maintenance").set(
+      { 
+        enabled, 
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp() 
+      },
+      { merge: true }
+    );
+    showToast(enabled ? "🔧 Maintenance Mode চালু হয়েছে" : "✅ Maintenance Mode বন্ধ হয়েছে");
+  } catch (e) {
+    showToast("Error: " + e.message, "error");
+  }
+}
+
+// Maintenance Form Submit
+document.getElementById("maintenanceForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  try {
+    await db.collection("siteSettings").doc("maintenance").set({
+      title: document.getElementById("maintenanceTitle").value.trim(),
+      message: document.getElementById("maintenanceMessage").value.trim(),
+      estimatedTime: document.getElementById("maintenanceEstimatedTime").value.trim(),
+      telegramLink: document.getElementById("maintenanceTelegramLink").value.trim(),
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+    showToast("✅ Maintenance Settings Save হয়েছে");
+  } catch (err) {
+    showToast("Error: " + err.message, "error");
+  }
+});
+
 </script>
 </body>
 </html>
