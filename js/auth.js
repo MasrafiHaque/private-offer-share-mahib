@@ -72,13 +72,21 @@ function updateAuthUI() {
 }
 
 function openAuthModal(mode = "login") {
-  document.getElementById("authModalOverlay").classList.add("active");
-  setAuthTab(mode);
+  var modal = document.getElementById("authModalOverlay");
+  if (modal) {
+    modal.classList.add("active");
+    setAuthTab(mode);
+  } else {
+    console.error("authModalOverlay NOT FOUND!");
+  }
 }
 
 function closeAuthModal() {
-  document.getElementById("authModalOverlay").classList.remove("active");
-  document.getElementById("authError").textContent = "";
+  var modal = document.getElementById("authModalOverlay");
+  if (modal) {
+    modal.classList.remove("active");
+    document.getElementById("authError").textContent = "";
+  }
 }
 
 function setAuthTab(mode) {
