@@ -1,63 +1,85 @@
 /* ============================================
    Main Site Logic
-   (Updated: Multi-Source Products, COD, Source Filter)
+   (Updated: Fixed Source Filter & Theme)
    ============================================ */
 
 let allProducts = [];
 let allCategories = [];
-let allSources = []; // নতুন: সব প্রোডাক্ট সোর্স
 let activeCategory = "all";
-let activeSource = "all"; // নতুন: অ্যাক্টিভ সোর্স ফিল্টার
+let activeSource = "all";
 let searchQuery = "";
-let enabledSources = []; // নতুন: Admin Panel থেকে অনুমোদিত সোর্স
+let enabledSources = [];
 
 document.addEventListener("DOMContentLoaded", () => {
+  console.log("DOM loaded, initializing...");
+  
+  // Theme initialize (সবার আগে)
   initTheme();
+  
+  // Theme toggle button
+  const themeBtn = document.getElementById("themeToggleBtn");
+  if (themeBtn) {
+    themeBtn.addEventListener("click", function(e) {
+      e.preventDefault();
+      toggleTheme();
+      console.log("Theme button clicked");
+    });
+    console.log("Theme button listener attached");
+  } else {
+    console.error("Theme button NOT found!");
+  }
+
+  // Other initializations
   trackVisit();
-  loadSiteSettings(); // নতুন: সাইট সেটিংস লোড
-  loadEnabledSources(); // নতুন: অনুমোদিত সোর্স লোড
+  loadSiteSettings();
+  loadEnabledSources();
   loadCategories();
   loadProducts();
   setupTelegramPopup();
   setupBackToTop();
-  setupSourceFilter(); // নতুন: সোর্স ফিল্টার ড্রপডাউন
-  setupSourceFilterClickOutside(); // নতুন: ড্রপডাউনের বাইরে ক্লিক করলে বন্ধ
+  setupSourceFilter();
+  setupSourceFilterClickOutside();
 
-  document.getElementById("themeToggleBtn")?.addEventListener("click", toggleTheme);
-
-  document.getElementById("searchInput")?.addEventListener(
-    "input",
-    debounce((e) => {
-      searchQuery = e.target.value.trim().toLowerCase();
-      renderProducts();
-      if (searchQuery) {
-        db.collection("searchQueries").add({
-          query: searchQuery,
-          date: todayKey(),
-          timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        }).catch(() => {});
-      }
-    }, 450)
-  );
+  // Search input
+  const searchInput = document.getElementById("searchInput");
+  if (searchInput) {
+    searchInput.addEventListener(
+      "input",
+      debounce((e) => {
+        searchQuery = e.target.value.trim().toLowerCase();
+        renderProducts();
+        if (searchQuery) {
+          db.collection("searchQueries").add({
+            query: searchQuery,
+            date: todayKey(),
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+          }).catch(() => {});
+        }
+      }, 450)
+    );
+  }
+  
+  console.log("Initialization complete");
 });
 
-/* ---------- Site Settings Load (New) ---------- */
+/* ---------- Site Settings Load ---------- */
 async function loadSiteSettings() {
   try {
     const doc = await db.collection("siteSettings").doc("general").get();
     if (doc.exists) {
       const settings = doc.data();
-      // Hero Section আপডেট
       if (settings.bannerTitle) {
         document.getElementById("heroTitle").innerHTML = settings.bannerTitle;
       }
       if (settings.bannerSubtitle) {
         document.getElementById("heroSubtitle").textContent = settings.bannerSubtitle;
       }
-      // Telegram Link আপডেট
       if (settings.telegramLink) {
         window.TELEGRAM_LINK = settings.telegramLink;
-        document.getElementById("telegramHeroBtn").href = settings.telegramLink;
+        const telegramBtn = document.getElementById("telegramHeroBtn");
+        if (telegramBtn) {
+          telegramBtn.href = settings.telegramLink;
+        }
       }
     }
   } catch (e) {
@@ -65,7 +87,7 @@ async function loadSiteSettings() {
   }
 }
 
-/* ---------- Enabled Sources Load (New) ---------- */
+/* ---------- Enabled Sources Load ---------- */
 async function loadEnabledSources() {
   try {
     const snap = await db.collection("productSources")
@@ -73,15 +95,11 @@ async function loadEnabledSources() {
       .get();
     
     enabledSources = snap.docs.map(d => d.id);
-    
-    // ক্যাশে সেভ
     setActiveSources(enabledSources);
-    
-    // সোর্স ফিল্টার UI আপডেট
     renderSourceFilter();
     renderSourceTabs();
+    renderProducts();
   } catch (e) {
-    // ক্যাশ থেকে পড়ার চেষ্টা
     const cached = getActiveSources();
     if (cached) {
       enabledSources = cached;
@@ -95,6 +113,8 @@ async function loadEnabledSources() {
 /* ---------- Products ---------- */
 function loadProducts() {
   const grid = document.getElementById("productGrid");
+  if (!grid) return;
+  
   grid.innerHTML = Array(8).fill('<div class="skeleton skeleton-card"></div>').join("");
 
   db.collection("products")
@@ -114,14 +134,16 @@ function loadProducts() {
 
 function renderProducts() {
   const grid = document.getElementById("productGrid");
+  if (!grid) return;
+  
   let list = allProducts;
 
-  // Source filter (নতুন)
+  // Source filter
   if (enabledSources.length > 0) {
     list = list.filter((p) => enabledSources.includes(p.source || "daraz"));
   }
 
-  // Active source tab filter (নতুন)
+  // Active source tab filter
   if (activeSource !== "all") {
     list = list.filter((p) => p.source === activeSource);
   }
@@ -167,42 +189,40 @@ function productCardHTML(p) {
     ? `<span class="discount-badge">-${discount}%</span>` 
     : "";
 
-  // Action Buttons (Source ভিত্তিক)
+  // Action Buttons
   let actionButtons = "";
   
   if (source === "daraz") {
-    // Daraz: Buy Now বাটন (Auth Required)
     actionButtons = `
       <button class="buy-now-btn" onclick="requireAuthThenRedirect('${(p.affiliateLink || "").replace(/'/g, "\\'")}', '${p.id}', 'daraz')">
         এখনই কিনুন — Daraz 🛒
       </button>
     `;
   } else if (source === "external") {
-    // External: সোশ্যাল মিডিয়া বাটন
     const socialLinks = p.socialLinks || {};
     actionButtons = `<div class="social-btns">`;
     if (socialLinks.facebook) {
       actionButtons += `
         <button class="social-btn fb" onclick="trackSocialClick('${p.id}','facebook'); window.open('${socialLinks.facebook.replace(/'/g, "\\'")}','_blank')">
-          <i class="fab fa-facebook"></i> Facebook
+          <i class="fab fa-facebook"></i>
         </button>`;
     }
     if (socialLinks.messenger) {
       actionButtons += `
         <button class="social-btn msg" onclick="trackSocialClick('${p.id}','messenger'); window.open('${socialLinks.messenger.replace(/'/g, "\\'")}','_blank')">
-          <i class="fab fa-facebook-messenger"></i> Messenger
+          <i class="fab fa-facebook-messenger"></i>
         </button>`;
     }
     if (socialLinks.whatsapp) {
       actionButtons += `
         <button class="social-btn wa" onclick="trackSocialClick('${p.id}','whatsapp'); window.open('${socialLinks.whatsapp.replace(/'/g, "\\'")}','_blank')">
-          <i class="fab fa-whatsapp"></i> WhatsApp
+          <i class="fab fa-whatsapp"></i>
         </button>`;
     }
     if (socialLinks.website) {
       actionButtons += `
         <button class="social-btn" onclick="trackSocialClick('${p.id}','website'); window.open('${socialLinks.website.replace(/'/g, "\\'")}','_blank')">
-          <i class="fas fa-globe"></i> Website
+          <i class="fas fa-globe"></i>
         </button>`;
     }
     if (!socialLinks.facebook && !socialLinks.messenger && !socialLinks.whatsapp && !socialLinks.website) {
@@ -210,7 +230,6 @@ function productCardHTML(p) {
     }
     actionButtons += `</div>`;
   } else if (source === "own") {
-    // Own: Cash on Delivery বাটন
     actionButtons = `
       <button class="cod-btn" onclick="requireAuthForCOD('${p.id}', '${escapeHTML(p.name).replace(/'/g, "\\'")}', ${p.currentPrice}, 'own')">
         📦 ক্যাশ অন ডেলিভারি
@@ -269,7 +288,7 @@ function renderCategories() {
   });
 }
 
-/* ---------- Source Tabs (New) ---------- */
+/* ---------- Source Tabs ---------- */
 function renderSourceTabs() {
   const wrap = document.getElementById("sourceTabs");
   if (!wrap) return;
@@ -278,7 +297,6 @@ function renderSourceTabs() {
     `<button class="source-tab ${activeSource === "all" ? "active" : ""}" data-source="all">🌐 সব সোর্স</button>`
   ];
 
-  // শুধু enabled sources দেখাবে
   if (enabledSources.includes("daraz")) {
     tabs.push(`<button class="source-tab ${activeSource === "daraz" ? "active" : ""}" data-source="daraz">
       <span class="source-dot" style="background:${getSourceColor('daraz')};"></span> Daraz
@@ -286,12 +304,12 @@ function renderSourceTabs() {
   }
   if (enabledSources.includes("external")) {
     tabs.push(`<button class="source-tab ${activeSource === "external" ? "active" : ""}" data-source="external">
-      <span class="source-dot" style="background:${getSourceColor('external')};"></span> অন্যান্য প্রতিষ্ঠান
+      <span class="source-dot" style="background:${getSourceColor('external')};"></span> অন্যান্য
     </button>`);
   }
   if (enabledSources.includes("own")) {
     tabs.push(`<button class="source-tab ${activeSource === "own" ? "active" : ""}" data-source="own">
-      <span class="source-dot" style="background:${getSourceColor('own')};"></span> আমাদের প্রোডাক্ট
+      <span class="source-dot" style="background:${getSourceColor('own')};"></span> আমাদের
     </button>`);
   }
 
@@ -305,10 +323,13 @@ function renderSourceTabs() {
   });
 }
 
-/* ---------- Source Filter Dropdown (New) ---------- */
+/* ---------- Source Filter Dropdown ---------- */
 function renderSourceFilter() {
   const wrap = document.getElementById("sourceFilterList");
-  if (!wrap) return;
+  if (!wrap) {
+    console.error("sourceFilterList element NOT found!");
+    return;
+  }
 
   const allSourcesConfig = [
     { id: "daraz", ...SOURCE_CONFIG.daraz },
@@ -317,7 +338,7 @@ function renderSourceFilter() {
   ];
 
   wrap.innerHTML = allSourcesConfig.map(s => `
-    <label class="source-filter-item">
+    <label class="source-filter-item" onclick="event.stopPropagation();">
       <input type="checkbox" 
              value="${s.id}" 
              ${enabledSources.includes(s.id) ? "checked" : ""}
@@ -326,9 +347,12 @@ function renderSourceFilter() {
       ${s.label}
     </label>
   `).join("");
+  
+  console.log("Source filter rendered:", enabledSources);
 }
 
 function toggleSourceFilter(sourceId, checked) {
+  console.log("Toggle source:", sourceId, checked);
   if (checked) {
     if (!enabledSources.includes(sourceId)) {
       enabledSources.push(sourceId);
@@ -339,7 +363,6 @@ function toggleSourceFilter(sourceId, checked) {
   setActiveSources(enabledSources);
   renderSourceTabs();
   
-  // যদি current active source disabled হয় তাহলে all এ ফিরিয়ে দাও
   if (!enabledSources.includes(activeSource) && activeSource !== "all") {
     activeSource = "all";
   }
@@ -350,12 +373,24 @@ function toggleSourceFilter(sourceId, checked) {
 function setupSourceFilter() {
   const btn = document.getElementById("sourceFilterBtn");
   const menu = document.getElementById("sourceFilterMenu");
-  if (!btn || !menu) return;
+  
+  if (!btn) {
+    console.error("sourceFilterBtn NOT found!");
+    return;
+  }
+  if (!menu) {
+    console.error("sourceFilterMenu NOT found!");
+    return;
+  }
 
   btn.addEventListener("click", (e) => {
+    e.preventDefault();
     e.stopPropagation();
     menu.classList.toggle("active");
+    console.log("Filter menu toggled:", menu.classList.contains("active"));
   });
+  
+  console.log("Source filter setup complete");
 }
 
 function setupSourceFilterClickOutside() {
@@ -378,17 +413,24 @@ function setupTelegramPopup() {
     setTimeout(() => overlay.classList.add("active"), 1200);
   }
 
-  document.getElementById("telegramCloseBtn").addEventListener("click", closeTelegramModal);
-  document.getElementById("telegramSkipBtn").addEventListener("click", closeTelegramModal);
-  document.getElementById("telegramJoinBtn").addEventListener("click", () => {
-    trackTelegramClick("popup");
-    window.open(TELEGRAM_LINK, "_blank");
-    closeTelegramModal();
-  });
+  const closeBtn = document.getElementById("telegramCloseBtn");
+  const skipBtn = document.getElementById("telegramSkipBtn");
+  const joinBtn = document.getElementById("telegramJoinBtn");
+  
+  if (closeBtn) closeBtn.addEventListener("click", closeTelegramModal);
+  if (skipBtn) skipBtn.addEventListener("click", closeTelegramModal);
+  if (joinBtn) {
+    joinBtn.addEventListener("click", () => {
+      trackTelegramClick("popup");
+      window.open(window.TELEGRAM_LINK || "https://t.me/YOUR_CHANNEL", "_blank");
+      closeTelegramModal();
+    });
+  }
 }
 
 function closeTelegramModal() {
-  document.getElementById("telegramModalOverlay").classList.remove("active");
+  const overlay = document.getElementById("telegramModalOverlay");
+  if (overlay) overlay.classList.remove("active");
   localStorage.setItem("dn_telegram_closed", "true");
 }
 
