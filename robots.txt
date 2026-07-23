@@ -1,7 +1,13 @@
 User-agent: *
+Allow: /
 Disallow: /sys-mgr-p8x2.html
+Disallow: /js/firebase-config.js
 Disallow: /firebase.json
 Disallow: /firestore.rules
-Disallow: /firestore.indexes.json
 Disallow: /package.json
+
+# Crawl delay (polite crawling)
+Crawl-delay: 1
+
+# Sitemap
 Sitemap: https://privateoffershare.com/sitemap.xml

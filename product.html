@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title id="productTitle">প্রোডাক্ট ডিটেইল — Private Offer Share</title>
+<meta name="description" content="প্রোডাক্টের বিস্তারিত তথ্য, দাম ও অর্ডার করার নিয়ম">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://privateoffershare.com/product.html">
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700;800&family=Poppins:wght@700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .product-detail-container {
+    max-width: 1000px;
+    margin: 2rem auto;
+    padding: 0 1.25rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+  }
+  .product-detail-image {
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: var(--bg-soft);
+    aspect-ratio: 1/1;
+  }
+  .product-detail-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .product-detail-info h1 {
+    font-family: var(--font-display);
+    font-size: 1.6rem;
+    font-weight: 800;
+    margin-bottom: 0.8rem;
+    line-height: 1.3;
+  }
+  .product-detail-source {
+    display: inline-block;
+    padding: 0.3rem 0.8rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 1rem;
+  }
+  .product-detail-price {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--amber);
+    margin: 1rem 0;
+  }
+  .product-detail-price .original {
+    font-size: 1.1rem;
+    color: var(--text-muted);
+    text-decoration: line-through;
+    margin-left: 0.8rem;
+    font-weight: 500;
+  }
+  .product-detail-discount {
+    display: inline-block;
+    background: var(--orange);
+    color: white;
+    padding: 0.2rem 0.7rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    margin-left: 0.8rem;
+  }
+  .product-detail-description {
+    color: var(--text-muted);
+    line-height: 1.7;
+    margin: 1.2rem 0;
+    font-size: 0.95rem;
+  }
+  .product-detail-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+  .product-detail-actions .btn {
+    font-size: 1rem;
+    padding: 0.75rem 1.5rem;
+  }
+  .back-link {
+    display: inline-block;
+    margin: 1.5rem 0 0;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+  }
+  .back-link:hover { color: var(--accent); }
+  
+  @media (max-width: 700px) {
+    .product-detail-container { grid-template-columns: 1fr; gap: 1rem; }
+    .product-detail-image { aspect-ratio: 1/1; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <div class="header-top-row">
+      <a href="index.html" class="logo">
+        <img src="assets/images/logo.png" alt="Private Offer Share" class="logo-img" width="40" height="40">
+        <span class="logo-text">Private Offer <em>Share</em></span>
+      </a>
+      <div class="header-actions">
+        <button class="icon-btn" id="themeToggleBtn" title="Dark/Light Mode">🌙</button>
+        <a href="index.html" class="btn btn-outline btn-sm"><i class="fas fa-arrow-left"></i> হোম</a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="product-detail-container" id="productDetailContainer">
+  <div class="skeleton" style="aspect-ratio:1/1;border-radius:var(--radius);"></div>
+  <div>
+    <div class="skeleton" style="height:2rem;width:70%;margin-bottom:1rem;"></div>
+    <div class="skeleton" style="height:1rem;width:40%;margin-bottom:0.5rem;"></div>
+    <div class="skeleton" style="height:1rem;width:100%;margin-bottom:0.5rem;"></div>
+    <div class="skeleton" style="height:1rem;width:80%;margin-bottom:1rem;"></div>
+    <div class="skeleton" style="height:3rem;width:100%;"></div>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div>© <span id="year"></span> Private Offer Share</div>
+    <div><a href="index.html">হোম</a> | <a href="privacy.html">প্রাইভেসি পলিসি</a> | <a href="terms.html">টার্মস</a> | <a href="contact.html">কন্টাক্ট</a></div>
+  </div>
+</footer>
+
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+<script src="js/firebase-config.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/analytics.js"></script>
+<script src="js/auth.js"></script>
+<script>
+  document.getElementById('year').textContent = new Date().getFullYear();
+  initTheme();
+  
+  // URL থেকে product ID বের করা
+  const urlParams = new URLSearchParams(window.location.search);
+  const productId = urlParams.get('id');
+  
+  if (productId) {
+    loadProductDetail(productId);
+  } else {
+    document.getElementById('productDetailContainer').innerHTML = '<div style="text-align:center;padding:3rem;"><h2>প্রোডাক্ট পাওয়া যায়নি</h2><a href="index.html" class="btn btn-primary" style="margin-top:1rem;">হোমে ফিরুন</a></div>';
+  }
+  
+  async function loadProductDetail(id) {
+    try {
+      const doc = await db.collection("products").doc(id).get();
+      if (!doc.exists) {
+        showError();
+        return;
+      }
+      const p = doc.data();
+      p.id = doc.id;
+      renderProductDetail(p);
+      document.getElementById('productTitle').textContent = p.name + ' — Private Offer Share';
+    } catch (e) {
+      showError();
+    }
+  }
+  
+  function renderProductDetail(p) {
+    const discount = p.originalPrice && p.originalPrice > p.currentPrice
+      ? Math.round(((p.originalPrice - p.currentPrice) / p.originalPrice) * 100) : 0;
+    const source = p.source || 'daraz';
+    
+    let actionBtn = '';
+    if (source === 'daraz') {
+      actionBtn = `<button class="btn btn-primary" onclick="requireAuthThenRedirect('${(p.affiliateLink || '').replace(/'/g, "\\'")}', '${p.id}', 'daraz')">🛒 Daraz-এ কিনুন</button>`;
+    } else if (source === 'external') {
+      const sl = p.socialLinks || {};
+      let btns = '';
+      if (sl.facebook) btns += `<a href="${sl.facebook}" target="_blank" class="btn btn-outline"><i class="fab fa-facebook"></i> Facebook</a>`;
+      if (sl.messenger) btns += `<a href="${sl.messenger}" target="_blank" class="btn btn-outline"><i class="fab fa-facebook-messenger"></i> Messenger</a>`;
+      if (sl.whatsapp) btns += `<a href="${sl.whatsapp}" target="_blank" class="btn btn-outline"><i class="fab fa-whatsapp"></i> WhatsApp</a>`;
+      actionBtn = btns || '<span style="color:var(--text-muted);">কোনো লিংক নেই</span>';
+    } else if (source === 'own') {
+      actionBtn = `<button class="btn btn-primary" onclick="requireAuthForCOD('${p.id}', '${escapeHTML(p.name).replace(/'/g, "\\'")}', ${p.currentPrice}, 'own')">📦 ক্যাশ অন ডেলিভারি</button>`;
+    }
+    
+    document.getElementById('productDetailContainer').innerHTML = `
+      <div class="product-detail-image">
+        <img src="${p.image || 'assets/images/empty-box.svg'}" alt="${escapeHTML(p.name)}" onerror="this.src='assets/images/empty-box.svg'">
+      </div>
+      <div class="product-detail-info">
+        <span class="product-detail-source" style="background:${getSourceColor(source)}">${getSourceLabel(source)}</span>
+        <h1>${escapeHTML(p.name)}</h1>
+        <div>
+          <span class="product-detail-price">${formatPrice(p.currentPrice)}</span>
+          ${p.originalPrice && discount > 0 ? `<span class="original">${formatPrice(p.originalPrice)}</span><span class="product-detail-discount">-${discount}%</span>` : ''}
+        </div>
+        <p class="product-detail-description">${escapeHTML(p.description || 'এই প্রোডাক্ট সম্পর্কে বিস্তারিত তথ্য শীঘ্রই যোগ করা হবে।')}</p>
+        <div class="product-detail-actions">${actionBtn}</div>
+        <a href="index.html" class="back-link">← সব প্রোডাক্টে ফিরুন</a>
+      </div>
+    `;
+  }
+  
+  function showError() {
+    document.getElementById('productDetailContainer').innerHTML = '<div style="text-align:center;padding:3rem;"><h2>প্রোডাক্ট পাওয়া যায়নি</h2><a href="index.html" class="btn btn-primary" style="margin-top:1rem;">হোমে ফিরুন</a></div>';
+  }
+</script>
+</body>
+</html>

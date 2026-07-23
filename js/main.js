@@ -260,7 +260,7 @@ function productCardHTML(p) {
         <img src="${img}" alt="${escapeHTML(p.name)}" loading="lazy" onerror="this.src='assets/images/empty-box.svg'">
       </div>
       <div class="product-body">
-        <div class="product-name">${escapeHTML(p.name)}</div>
+        <a href="product.html?id=${p.id}" class="product-name" style="display:block;">${escapeHTML(p.name)}</a>
         <div class="price-row">
           <span class="price-current">${formatPrice(p.currentPrice)}</span>
           ${p.originalPrice && discount > 0 ? `<span class="price-original">${formatPrice(p.originalPrice)}</span>` : ""}
