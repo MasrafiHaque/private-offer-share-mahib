@@ -96,7 +96,7 @@ button { font-family: inherit; cursor: pointer; }
   gap: 0.55rem;
   flex-shrink: 0;
 }
-.logo-img { width: 40px; height: 40px; object-fit: contain; flex-shrink: 0; }
+.logo-img { width: 70px; height: 70px; object-fit: contain; flex-shrink: 0; }
 .logo-text {
   font-family: var(--font-display);
   font-weight: 800;
