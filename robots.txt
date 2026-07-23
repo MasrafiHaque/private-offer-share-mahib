@@ -1,0 +1,7 @@
+User-agent: *
+Disallow: /sys-mgr-p8x2.html
+Disallow: /firebase.json
+Disallow: /firestore.rules
+Disallow: /firestore.indexes.json
+Disallow: /package.json
+Sitemap: https://privateoffershare.com/sitemap.xml
