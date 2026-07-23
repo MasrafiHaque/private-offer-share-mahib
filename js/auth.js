@@ -1,18 +1,18 @@
 /* ============================================
    Authentication (Email + Phone)
-   (Updated: COD Order Flow Support)
+   (Updated: COD Order Flow FIXED)
    ============================================ */
 
 let currentUser = null;
-let pendingBuyProduct = null; // Login শেষে যে প্রোডাক্টে Redirect করতে হবে
-let pendingCODSource = null; // COD অর্ডারের জন্য (source, product, price)
+let pendingBuyProduct = null;
+let pendingCODSource = null;
+let currentCODProduct = null; // COD প্রোডাক্ট ডাটা স্টোর
 
 auth.onAuthStateChanged(async (user) => {
   currentUser = user;
   updateAuthUI();
 
   if (user) {
-    // Ensure user document exists (first-time social/phone login guard)
     const ref = db.collection("users").doc(user.uid);
     const snap = await ref.get();
     if (!snap.exists) {
@@ -35,19 +35,16 @@ auth.onAuthStateChanged(async (user) => {
       }
     }
 
-    // যদি Login করা হয়েছে Buy Now থেকে redirect করার জন্য
     if (pendingBuyProduct) {
       const link = pendingBuyProduct;
       pendingBuyProduct = null;
       closeAuthModal();
       window.open(link, "_blank");
-    }
-    // যদি Login করা হয়েছে COD Order থেকে
-    else if (pendingCODSource) {
+    } else if (pendingCODSource) {
       const codData = pendingCODSource;
       pendingCODSource = null;
       closeAuthModal();
-      openCODModal(codData.product, codData.source);
+      openCODModal(codData.product);
     } else {
       closeAuthModal();
     }
@@ -104,34 +101,46 @@ function requireAuthThenRedirect(affiliateLink, productId, source) {
   }
 }
 
-/* ---------- COD Order gate (New) ---------- */
+/* ---------- COD Order gate ---------- */
 function requireAuthForCOD(productId, productName, productPrice, source) {
+  const productData = { id: productId, name: productName, price: productPrice, source: source };
+  
   if (currentUser) {
-    openCODModal({ id: productId, name: productName, price: productPrice, source: source });
+    openCODModal(productData);
   } else {
-    pendingCODSource = {
-      product: { id: productId, name: productName, price: productPrice, source: source }
-    };
+    pendingCODSource = { product: productData };
     openAuthModal("login");
     showToast("অর্ডার করতে হলে আগে Login করুন", "error");
   }
 }
 
-/* ---------- COD Modal (New) ---------- */
+/* ---------- COD Modal ---------- */
 function openCODModal(product) {
+  currentCODProduct = product;
+  
   document.getElementById("codProductName").textContent = product.name;
   document.getElementById("codProductPrice").textContent = formatPrice(product.price);
-  document.getElementById("codOrderForm").dataset.productId = product.id;
-  document.getElementById("codOrderForm").dataset.source = product.source;
+  
+  // Reset form
+  document.getElementById("codOrderForm").reset();
+  document.getElementById("codName").value = "";
+  document.getElementById("codPhone").value = "";
+  document.getElementById("codAddress").value = "";
+  document.getElementById("codQuantity").value = "1";
+  
   document.getElementById("codModalOverlay").classList.add("active");
   
-  // ইউজারের নাম ও ফোন অটো-ফিল (Firestore থেকে)
+  // ইউজারের নাম ও ফোন অটো-ফিল
   if (currentUser) {
     db.collection("users").doc(currentUser.uid).get().then((doc) => {
       if (doc.exists) {
         const data = doc.data();
-        if (data.name) document.getElementById("codName").value = data.name;
-        if (data.phone) document.getElementById("codPhone").value = data.phone;
+        if (data.name && !document.getElementById("codName").value) {
+          document.getElementById("codName").value = data.name;
+        }
+        if (data.phone && !document.getElementById("codPhone").value) {
+          document.getElementById("codPhone").value = data.phone;
+        }
       }
     }).catch(() => {});
   }
@@ -139,44 +148,82 @@ function openCODModal(product) {
 
 function closeCodModal() {
   document.getElementById("codModalOverlay").classList.remove("active");
-  document.getElementById("codOrderForm").reset();
+  currentCODProduct = null;
 }
 
-/* ---------- COD Order Form Submit (New) ---------- */
+/* ---------- COD Order Form Submit ---------- */
+function submitCODOrder(e) {
+  e.preventDefault();
+  
+  if (!currentCODProduct) {
+    showToast("প্রোডাক্ট তথ্য পাওয়া যায়নি, আবার চেষ্টা করুন।", "error");
+    return;
+  }
+  
+  const customerName = document.getElementById("codName").value.trim();
+  const customerPhone = document.getElementById("codPhone").value.trim();
+  const customerAddress = document.getElementById("codAddress").value.trim();
+  const quantity = parseInt(document.getElementById("codQuantity").value) || 1;
+  
+  // Validation
+  if (!customerName) {
+    showToast("অনুগ্রহ করে আপনার নাম লিখুন", "error");
+    return;
+  }
+  if (!customerPhone) {
+    showToast("অনুগ্রহ করে ফোন নম্বর লিখুন", "error");
+    return;
+  }
+  if (!customerAddress) {
+    showToast("অনুগ্রহ করে ডেলিভারি ঠিকানা লিখুন", "error");
+    return;
+  }
+  
+  const orderData = {
+    productId: currentCODProduct.id,
+    source: currentCODProduct.source || "own",
+    productName: currentCODProduct.name,
+    productPrice: formatPrice(currentCODProduct.price),
+    customerName: customerName,
+    customerPhone: customerPhone,
+    customerAddress: customerAddress,
+    quantity: quantity,
+    userId: currentUser ? currentUser.uid : null,
+    userEmail: currentUser ? currentUser.email : null,
+    status: "pending",
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  };
+  
+  console.log("Submitting COD Order:", orderData);
+  
+  db.collection("codOrders").add(orderData)
+    .then((docRef) => {
+      console.log("COD Order saved with ID:", docRef.id);
+      trackCODOrder(currentCODProduct.id);
+      showToast("✅ আপনার অর্ডার সফলভাবে নেওয়া হয়েছে! শীঘ্রই যোগাযোগ করা হবে।");
+      closeCodModal();
+    })
+    .catch((err) => {
+      console.error("COD Order Error:", err);
+      showToast("অর্ডার নিতে সমস্যা হয়েছে, আবার চেষ্টা করুন।", "error");
+    });
+}
+
+/* ---------- Auth Form Submit ---------- */
 document.addEventListener("DOMContentLoaded", () => {
+  // COD Form - IMPORTANT: Remove old listener first, then add new one
   const codForm = document.getElementById("codOrderForm");
   if (codForm) {
-    codForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const productId = codForm.dataset.productId;
-      const source = codForm.dataset.source;
-      
-      const orderData = {
-        productId,
-        source,
-        productName: document.getElementById("codProductName").textContent,
-        productPrice: document.getElementById("codProductPrice").textContent,
-        customerName: document.getElementById("codName").value.trim(),
-        customerPhone: document.getElementById("codPhone").value.trim(),
-        customerAddress: document.getElementById("codAddress").value.trim(),
-        quantity: Number(document.getElementById("codQuantity").value) || 1,
-        userId: currentUser ? currentUser.uid : null,
-        status: "pending",
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      };
-
-      try {
-        await db.collection("codOrders").add(orderData);
-        trackCODOrder(productId);
-        showToast("✅ আপনার অর্ডার সফলভাবে নেওয়া হয়েছে! শীঘ্রই যোগাযোগ করা হবে।");
-        closeCodModal();
-      } catch (err) {
-        showToast("অর্ডার নিতে সমস্যা হয়েছে, আবার চেষ্টা করুন।", "error");
-      }
-    });
+    // Clone and replace to remove all existing listeners
+    const newForm = codForm.cloneNode(true);
+    codForm.parentNode.replaceChild(newForm, codForm);
+    
+    // Add fresh listener
+    newForm.addEventListener("submit", submitCODOrder);
+    console.log("COD Form listener attached");
   }
 
-  // Auth form submit
+  // Auth form
   const form = document.getElementById("authForm");
   if (!form) return;
 
