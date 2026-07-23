@@ -52,7 +52,7 @@ Options -Indexes
 # ---------- Hotlink protection ----------
 <IfModule mod_rewrite.c>
     RewriteCond %{HTTP_REFERER} !^$
-    RewriteCond %{HTTP_REFERER} !^http(s)?://(www\.)?yourdomain\.com [NC]
+    RewriteCond %{HTTP_REFERER} !^http(s)?://(www\.)?privateoffershare\.com [NC]
     RewriteCond %{HTTP_REFERER} !^http(s)?://(www\.)?google\.com [NC]
     RewriteCond %{HTTP_REFERER} !^http(s)?://(www\.)?facebook\.com [NC]
     RewriteRule \.(jpg|jpeg|png|gif|svg|webp)$ - [NC,F,L]
