@@ -443,12 +443,32 @@ function setupSourceFilterClickOutside() {
   document.addEventListener("click", (e) => {
     const menu = document.getElementById("sourceFilterMenu");
     const btn = document.getElementById("sourceFilterBtn");
-    if (menu && btn && !menu.contains(e.target) && !btn.contains(e.target)) {
+    
+    if (!menu || !btn) return;
+    
+    // Check if click is outside menu and button
+    const isClickInsideMenu = menu.contains(e.target);
+    const isClickOnButton = btn.contains(e.target);
+    
+    if (!isClickInsideMenu && !isClickOnButton) {
+      menu.classList.remove("active");
+    }
+  });
+  
+  // ✅ মোবাইলে backdrop ক্লিক করলেও বন্ধ হবে
+  document.addEventListener("touchstart", (e) => {
+    const menu = document.getElementById("sourceFilterMenu");
+    const btn = document.getElementById("sourceFilterBtn");
+    
+    if (!menu || !btn) return;
+    
+    if (menu.classList.contains("active") && 
+        !menu.contains(e.target) && 
+        !btn.contains(e.target)) {
       menu.classList.remove("active");
     }
   });
 }
-
 /* ---------- Telegram Popup ---------- */
 function setupTelegramPopup() {
   const overlay = document.getElementById("telegramModalOverlay");

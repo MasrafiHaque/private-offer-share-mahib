@@ -18,22 +18,20 @@
 <body>
 
 <!-- ============ HEADER ============ -->
+<!-- ============ HEADER ============ -->
 <header class="site-header">
   <div class="header-inner">
+    <!-- Logo -->
     <a href="#" class="logo">
       <img src="assets/images/logo.png" alt="Private Offer Share" class="logo-img">
       <span class="logo-text">Private Offer <em>Share</em></span>
     </a>
     
-    <div class="search-bar">
-      <i class="fas fa-search" style="color:var(--text-muted); margin-right:0.5rem;"></i>
-      <input type="text" id="searchInput" placeholder="প্রোডাক্ট খুঁজুন...">
-    </div>
-    
+    <!-- Action Buttons (Theme + Filter + Login) -->
     <div class="header-actions">
       <button class="icon-btn" id="themeToggleBtn" title="Dark/Light Mode">🌙</button>
       
-      <!-- Source Filter (নতুন) -->
+      <!-- Source Filter Dropdown -->
       <div class="source-filter-dropdown">
         <button class="icon-btn" id="sourceFilterBtn" title="প্রোডাক্ট সোর্স ফিল্টার">
           <i class="fas fa-filter"></i>
@@ -48,6 +46,12 @@
       <button class="icon-btn" id="userBtnHeader" style="display:none;" onclick="logout()" title="Logout">
         <i class="fas fa-user"></i>
       </button>
+    </div>
+    
+    <!-- Search Bar (মোবাইলে আলাদা লাইনে যাবে) -->
+    <div class="search-bar">
+      <i class="fas fa-search" style="color:var(--text-muted); margin-right:0.5rem;"></i>
+      <input type="text" id="searchInput" placeholder="প্রোডাক্ট খুঁজুন...">
     </div>
   </div>
 </header>
