@@ -1,62 +1,100 @@
 /* ============================================
-   Shared Utility Functions
+   Analytics Tracking
+   (Updated: Source info added to events)
    ============================================ */
 
-function showToast(message, type = "success") {
-  let wrap = document.querySelector(".toast-wrap");
-  if (!wrap) {
-    wrap = document.createElement("div");
-    wrap.className = "toast-wrap";
-    document.body.appendChild(wrap);
+async function trackVisit() {
+  const key = todayKey();
+  try {
+    await db.collection("analytics").doc(key).set(
+      {
+        date: key,
+        visits: firebase.firestore.FieldValue.increment(1)
+      },
+      { merge: true }
+    );
+  } catch (e) {
+    /* Fail silently — analytics tracking should never break the site */
   }
-  const toast = document.createElement("div");
-  toast.className = `toast ${type}`;
-  toast.textContent = message;
-  wrap.appendChild(toast);
-  setTimeout(() => toast.remove(), 3200);
 }
 
-function formatPrice(n) {
-  if (n === undefined || n === null) return "৳0";
-  return "৳" + Number(n).toLocaleString("en-BD");
+async function trackBuyClick(productId, source) {
+  const key = todayKey();
+  try {
+    await db.collection("analytics").doc(key).set(
+      { date: key, buyNowClicks: firebase.firestore.FieldValue.increment(1) },
+      { merge: true }
+    );
+    await db.collection("buyClicks").add({
+      productId,
+      source: source || "unknown",
+      date: key,
+      timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    await db.collection("products").doc(productId).update({
+      clickCount: firebase.firestore.FieldValue.increment(1),
+      lastClickedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  } catch (e) {
+    /* silent */
+  }
 }
 
-function escapeHTML(str) {
-  const div = document.createElement("div");
-  div.textContent = str ?? "";
-  return div.innerHTML;
+async function trackSocialClick(productId, platform) {
+  const key = todayKey();
+  try {
+    await db.collection("analytics").doc(key).set(
+      { date: key, socialClicks: firebase.firestore.FieldValue.increment(1) },
+      { merge: true }
+    );
+    await db.collection("socialClicks").add({
+      productId,
+      platform,
+      date: key,
+      timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  } catch (e) {
+    /* silent */
+  }
 }
 
-function todayKey() {
-  return new Date().toISOString().split("T")[0];
+async function trackCODOrder(productId) {
+  const key = todayKey();
+  try {
+    await db.collection("analytics").doc(key).set(
+      { date: key, codOrders: firebase.firestore.FieldValue.increment(1) },
+      { merge: true }
+    );
+  } catch (e) {
+    /* silent */
+  }
 }
 
-/* ---------- Theme (Dark/Light) ---------- */
-function initTheme() {
-  const saved = localStorage.getItem("dn_theme");
-  const preferred = saved || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
-  document.documentElement.setAttribute("data-theme", preferred);
-  updateThemeIcon(preferred);
+async function trackTelegramClick(source = "popup") {
+  const key = todayKey();
+  try {
+    await db.collection("analytics").doc(key).set(
+      { date: key, telegramClicks: firebase.firestore.FieldValue.increment(1) },
+      { merge: true }
+    );
+    await db.collection("telegramClicks").add({
+      source,
+      date: key,
+      timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  } catch (e) {
+    /* silent */
+  }
 }
 
-function toggleTheme() {
-  const current = document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light";
-  const next = current === "dark" ? "light" : "dark";
-  document.documentElement.setAttribute("data-theme", next);
-  localStorage.setItem("dn_theme", next);
-  updateThemeIcon(next);
-}
-
-function updateThemeIcon(theme) {
-  const btn = document.getElementById("themeToggleBtn");
-  if (btn) btn.textContent = theme === "dark" ? "☀️" : "🌙";
-}
-
-/* ---------- Debounce ---------- */
-function debounce(fn, delay = 400) {
-  let timer;
-  return (...args) => {
-    clearTimeout(timer);
-    timer = setTimeout(() => fn(...args), delay);
-  };
+async function trackEvent(eventName) {
+  try {
+    await db.collection("userEvents").add({
+      event: eventName,
+      userId: currentUser ? currentUser.uid : null,
+      timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  } catch (e) {
+    /* silent */
+  }
 }

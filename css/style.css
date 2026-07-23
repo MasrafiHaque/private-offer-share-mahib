@@ -1,5 +1,6 @@
 /* ============================================
-   DealNest — Design Tokens & Base Styles
+   Private Offer Share — Design Tokens & Base Styles
+   (Updated: Multi-Source Products + COD Support)
    ============================================ */
 
 :root {
@@ -23,6 +24,11 @@
   --accent: var(--orange);
   --accent-2: var(--gold);
   --header-bg: rgba(250,249,247,0.85);
+
+  /* Source badge colors */
+  --source-daraz: #F57224;
+  --source-external: #3B82F6;
+  --source-own: #10B981;
 
   --radius: 14px;
   --radius-sm: 8px;
@@ -136,6 +142,7 @@ button { font-family: inherit; cursor: pointer; }
   background: var(--bg-elevated);
   color: var(--text);
   transition: transform var(--transition), border-color var(--transition);
+  position: relative;
 }
 .icon-btn:hover { transform: translateY(-2px); border-color: var(--accent); }
 
@@ -146,6 +153,7 @@ button { font-family: inherit; cursor: pointer; }
   font-weight: 600;
   font-size: 0.9rem;
   transition: transform var(--transition), box-shadow var(--transition), opacity var(--transition);
+  white-space: nowrap;
 }
 .btn-primary {
   background: linear-gradient(135deg, var(--gold), var(--orange));
@@ -159,6 +167,59 @@ button { font-family: inherit; cursor: pointer; }
 }
 .btn-outline:hover { border-color: var(--accent); }
 .btn-ghost { background: none; border: none; color: var(--text-muted); }
+
+/* ---------- Source Filter Dropdown (New) ---------- */
+.source-filter-dropdown {
+  position: relative;
+}
+.source-filter-menu {
+  display: none;
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 0.5rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+  min-width: 220px;
+  z-index: 200;
+  overflow: hidden;
+}
+.source-filter-menu.active {
+  display: block;
+}
+.source-filter-header {
+  padding: 0.75rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+}
+.source-filter-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.7rem 1rem;
+  cursor: pointer;
+  font-size: 0.88rem;
+  font-weight: 500;
+  transition: background var(--transition);
+}
+.source-filter-item:hover {
+  background: var(--bg-soft);
+}
+.source-filter-item input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+}
+.source-filter-item .source-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
 
 /* ---------- Hero ---------- */
 .hero {
@@ -221,9 +282,43 @@ button { font-family: inherit; cursor: pointer; }
   font-size: 5rem;
 }
 
+/* ---------- Source Tabs (New) ---------- */
+.source-tabs {
+  padding: 0.5rem 1.25rem 0;
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  max-width: 1200px;
+  margin: 0 auto;
+  scrollbar-width: none;
+}
+.source-tabs::-webkit-scrollbar { display: none; }
+.source-tab {
+  flex: 0 0 auto;
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.6rem 1.2rem;
+  border-radius: 999px;
+  border: 1.5px solid var(--border);
+  background: var(--bg-elevated);
+  font-size: 0.88rem;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: all var(--transition);
+  color: var(--text-muted);
+}
+.source-tab.active, .source-tab:hover {
+  border-color: var(--accent);
+  color: var(--amber);
+}
+.source-tab .source-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
 /* ---------- Category strip ---------- */
 .categories {
-  padding: 1.5rem 1.25rem;
+  padding: 1.2rem 1.25rem;
   display: flex;
   gap: 0.75rem;
   overflow-x: auto;
@@ -262,7 +357,7 @@ button { font-family: inherit; cursor: pointer; }
 }
 .product-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
   gap: 1.1rem;
   padding: 0 1.25rem 2rem;
   max-width: 1200px;
@@ -277,16 +372,30 @@ button { font-family: inherit; cursor: pointer; }
   transition: transform var(--transition), box-shadow var(--transition);
   display: flex;
   flex-direction: column;
+  position: relative;
 }
 .product-card:hover { transform: translateY(-4px); box-shadow: 0 10px 24px rgba(18,18,18,0.12); }
 .product-img-wrap { position: relative; aspect-ratio: 1/1; background: var(--bg-soft); }
 .product-img-wrap img { width: 100%; height: 100%; object-fit: cover; }
+
+/* Source Badge (New) */
+.source-badge {
+  position: absolute; top: 0.6rem; right: 0.6rem;
+  font-size: 0.68rem; font-weight: 700;
+  padding: 0.2rem 0.55rem; border-radius: 6px;
+  color: white;
+}
+.source-badge.daraz { background: var(--source-daraz); }
+.source-badge.external { background: var(--source-external); }
+.source-badge.own { background: var(--source-own); }
+
 .discount-badge {
   position: absolute; top: 0.6rem; left: 0.6rem;
   background: var(--orange); color: white;
   font-size: 0.72rem; font-weight: 700;
   padding: 0.2rem 0.55rem; border-radius: 6px;
 }
+
 .product-body { padding: 0.85rem; display: flex; flex-direction: column; gap: 0.4rem; flex: 1; }
 .product-name {
   font-size: 0.92rem; font-weight: 600; line-height: 1.35;
@@ -295,8 +404,16 @@ button { font-family: inherit; cursor: pointer; }
 .price-row { display: flex; align-items: baseline; gap: 0.5rem; margin-top: auto; }
 .price-current { font-size: 1.15rem; font-weight: 800; color: var(--amber); }
 .price-original { font-size: 0.82rem; color: var(--text-muted); text-decoration: line-through; }
-.buy-now-btn {
+
+/* Action Buttons Container */
+.product-actions {
   margin-top: 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.buy-now-btn {
   width: 100%;
   padding: 0.6rem;
   border-radius: var(--radius-sm);
@@ -308,6 +425,49 @@ button { font-family: inherit; cursor: pointer; }
   transition: transform var(--transition), box-shadow var(--transition);
 }
 .buy-now-btn:hover { transform: scale(1.02); box-shadow: 0 6px 16px rgba(255,159,10,0.35); }
+
+/* Social Buttons (New - External Products) */
+.social-btns {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+.social-btn {
+  flex: 1;
+  min-width: fit-content;
+  padding: 0.45rem 0.6rem;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--border);
+  background: var(--bg-soft);
+  color: var(--text);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-align: center;
+  transition: all var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+}
+.social-btn:hover { border-color: var(--accent); background: rgba(255,159,10,0.08); }
+.social-btn.fb:hover { border-color: #1877F2; color: #1877F2; }
+.social-btn.msg:hover { border-color: #0084FF; color: #0084FF; }
+.social-btn.wa:hover { border-color: #25D366; color: #25D366; }
+
+/* COD Button (New - Own Products) */
+.cod-btn {
+  width: 100%;
+  padding: 0.5rem;
+  border-radius: var(--radius-sm);
+  border: 2px dashed var(--accent);
+  background: rgba(255,159,10,0.08);
+  color: var(--amber);
+  font-weight: 700;
+  font-size: 0.82rem;
+  transition: all var(--transition);
+}
+.cod-btn:hover { background: rgba(255,159,10,0.18); }
+
 .empty-state { text-align: center; padding: 3rem 1rem; color: var(--text-muted); grid-column: 1/-1; }
 
 /* ---------- Modal (shared) ---------- */
@@ -350,14 +510,19 @@ button { font-family: inherit; cursor: pointer; }
 .auth-method-switch button.active { border-color: var(--accent); color: var(--amber); background: rgba(255,159,10,0.08); }
 .form-group { margin-bottom: 0.9rem; }
 .form-group label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.35rem; }
-.form-group input {
+.form-group input, .form-group textarea, .form-group select {
   width: 100%; padding: 0.65rem 0.85rem; border-radius: var(--radius-sm);
   border: 1.5px solid var(--border); background: var(--bg); color: var(--text); font-size: 0.95rem;
+  font-family: inherit;
 }
-.form-group input:focus { outline: none; border-color: var(--accent); }
+.form-group textarea { resize: vertical; min-height: 80px; }
+.form-group input:focus, .form-group textarea:focus, .form-group select:focus { outline: none; border-color: var(--accent); }
 .auth-submit { width: 100%; padding: 0.75rem; margin-top: 0.3rem; }
 .auth-error { color: #E4453A; font-size: 0.85rem; margin-top: 0.5rem; min-height: 1.2em; }
 #recaptcha-container { margin-bottom: 0.8rem; }
+
+/* COD Modal */
+.cod-modal h2 { font-family: var(--font-display); font-size: 1.3rem; margin-bottom: 0.4rem; }
 
 /* Toasts */
 .toast-wrap { position: fixed; bottom: 1.2rem; right: 1.2rem; z-index: 2000; display: flex; flex-direction: column; gap: 0.5rem; }
@@ -372,7 +537,7 @@ button { font-family: inherit; cursor: pointer; }
 /* Skeleton loading */
 .skeleton { background: linear-gradient(90deg, var(--bg-soft) 25%, var(--border) 37%, var(--bg-soft) 63%); background-size: 400% 100%; animation: shimmer 1.4s ease infinite; border-radius: var(--radius); }
 @keyframes shimmer { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
-.skeleton-card { height: 260px; }
+.skeleton-card { height: 280px; }
 
 /* Footer */
 .site-footer { border-top: 1px solid var(--border); padding: 2rem 1.25rem; margin-top: 2rem; color: var(--text-muted); font-size: 0.88rem; }
@@ -381,16 +546,18 @@ button { font-family: inherit; cursor: pointer; }
 /* Back to top */
 .back-to-top {
   position: fixed; bottom: 1.2rem; left: 1.2rem; z-index: 500;
-  width: 44px; height: 44px; border-radius: 50%; border: none;
+  width: 44px; height: 44px; border-radius: 50%;
   background: var(--bg-elevated); border: 1px solid var(--border); color: var(--text);
   display: none; align-items: center; justify-content: center; box-shadow: var(--card-shadow);
 }
 .back-to-top.show { display: flex; }
 
+/* ---------- Responsive ---------- */
 @media (max-width: 860px) {
   .hero-inner { grid-template-columns: 1fr; }
   .hero-visual { order: -1; aspect-ratio: 16/9; }
   .search-bar { display: none; }
+  .source-filter-menu { right: auto; left: 0; }
 }
 @media (max-width: 480px) {
   .product-grid { grid-template-columns: repeat(2, 1fr); gap: 0.7rem; }
@@ -398,10 +565,13 @@ button { font-family: inherit; cursor: pointer; }
   .logo-text { font-size: 0.92rem; }
   .btn-primary#loginBtnHeader { padding: 0.5rem 0.85rem; font-size: 0.82rem; }
   .hero { padding: 2rem 1rem 1.5rem; }
+  .source-tab { font-size: 0.78rem; padding: 0.5rem 0.9rem; }
+  .social-btn { font-size: 0.72rem; padding: 0.4rem; }
 }
 @media (max-width: 360px) {
   .logo-img { width: 32px; height: 32px; }
   .logo-text { font-size: 0.8rem; }
+  .product-grid { grid-template-columns: 1fr 1fr; gap: 0.5rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {

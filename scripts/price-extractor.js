@@ -1,6 +1,5 @@
 /**
  * Daraz Product Page থেকে Price বের করার Logic
- * (price-scraper-test Repo-তে যেটা Test করে Confirm হয়েছে, ঠিক সেটাই)
  */
 const { chromium } = require("playwright");
 

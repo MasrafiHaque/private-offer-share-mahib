@@ -1,9 +1,11 @@
 /* ============================================
    Authentication (Email + Phone)
+   (Updated: COD Order Flow Support)
    ============================================ */
 
 let currentUser = null;
 let pendingBuyProduct = null; // Login শেষে যে প্রোডাক্টে Redirect করতে হবে
+let pendingCODSource = null; // COD অর্ডারের জন্য (source, product, price)
 
 auth.onAuthStateChanged(async (user) => {
   currentUser = user;
@@ -39,6 +41,13 @@ auth.onAuthStateChanged(async (user) => {
       pendingBuyProduct = null;
       closeAuthModal();
       window.open(link, "_blank");
+    }
+    // যদি Login করা হয়েছে COD Order থেকে
+    else if (pendingCODSource) {
+      const codData = pendingCODSource;
+      pendingCODSource = null;
+      closeAuthModal();
+      openCODModal(codData.product, codData.source);
     } else {
       closeAuthModal();
     }
@@ -84,9 +93,9 @@ function setAuthMethod(method) {
 }
 
 /* ---------- Buy Now gate ---------- */
-function requireAuthThenRedirect(affiliateLink, productId) {
+function requireAuthThenRedirect(affiliateLink, productId, source) {
   if (currentUser) {
-    trackBuyClick(productId);
+    trackBuyClick(productId, source);
     window.open(affiliateLink, "_blank");
   } else {
     pendingBuyProduct = affiliateLink;
@@ -95,8 +104,79 @@ function requireAuthThenRedirect(affiliateLink, productId) {
   }
 }
 
-/* ---------- Form submit ---------- */
+/* ---------- COD Order gate (New) ---------- */
+function requireAuthForCOD(productId, productName, productPrice, source) {
+  if (currentUser) {
+    openCODModal({ id: productId, name: productName, price: productPrice, source: source });
+  } else {
+    pendingCODSource = {
+      product: { id: productId, name: productName, price: productPrice, source: source }
+    };
+    openAuthModal("login");
+    showToast("অর্ডার করতে হলে আগে Login করুন", "error");
+  }
+}
+
+/* ---------- COD Modal (New) ---------- */
+function openCODModal(product) {
+  document.getElementById("codProductName").textContent = product.name;
+  document.getElementById("codProductPrice").textContent = formatPrice(product.price);
+  document.getElementById("codOrderForm").dataset.productId = product.id;
+  document.getElementById("codOrderForm").dataset.source = product.source;
+  document.getElementById("codModalOverlay").classList.add("active");
+  
+  // ইউজারের নাম ও ফোন অটো-ফিল (Firestore থেকে)
+  if (currentUser) {
+    db.collection("users").doc(currentUser.uid).get().then((doc) => {
+      if (doc.exists) {
+        const data = doc.data();
+        if (data.name) document.getElementById("codName").value = data.name;
+        if (data.phone) document.getElementById("codPhone").value = data.phone;
+      }
+    }).catch(() => {});
+  }
+}
+
+function closeCodModal() {
+  document.getElementById("codModalOverlay").classList.remove("active");
+  document.getElementById("codOrderForm").reset();
+}
+
+/* ---------- COD Order Form Submit (New) ---------- */
 document.addEventListener("DOMContentLoaded", () => {
+  const codForm = document.getElementById("codOrderForm");
+  if (codForm) {
+    codForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const productId = codForm.dataset.productId;
+      const source = codForm.dataset.source;
+      
+      const orderData = {
+        productId,
+        source,
+        productName: document.getElementById("codProductName").textContent,
+        productPrice: document.getElementById("codProductPrice").textContent,
+        customerName: document.getElementById("codName").value.trim(),
+        customerPhone: document.getElementById("codPhone").value.trim(),
+        customerAddress: document.getElementById("codAddress").value.trim(),
+        quantity: Number(document.getElementById("codQuantity").value) || 1,
+        userId: currentUser ? currentUser.uid : null,
+        status: "pending",
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      };
+
+      try {
+        await db.collection("codOrders").add(orderData);
+        trackCODOrder(productId);
+        showToast("✅ আপনার অর্ডার সফলভাবে নেওয়া হয়েছে! শীঘ্রই যোগাযোগ করা হবে।");
+        closeCodModal();
+      } catch (err) {
+        showToast("অর্ডার নিতে সমস্যা হয়েছে, আবার চেষ্টা করুন।", "error");
+      }
+    });
+  }
+
+  // Auth form submit
   const form = document.getElementById("authForm");
   if (!form) return;
 
@@ -130,7 +210,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       } else if (method === "phone") {
         await handlePhoneAuth();
-        return; // OTP flow handles its own UI
+        return;
       }
     } catch (err) {
       errorEl.textContent = friendlyAuthError(err.code);
@@ -154,7 +234,6 @@ async function handlePhoneAuth() {
   const otpField = document.getElementById("otpField");
 
   if (otpField.style.display === "block") {
-    // Step 2: verify code
     const code = document.getElementById("otpInput").value.trim();
     try {
       await confirmationResult.confirm(code);
@@ -165,7 +244,6 @@ async function handlePhoneAuth() {
     return;
   }
 
-  // Step 1: send code
   const phone = document.getElementById("phoneInput").value.trim();
   if (!phone.startsWith("+")) {
     errorEl.textContent = "ফোন নম্বর অবশ্যই Country Code সহ দিন, যেমন +8801XXXXXXXXX";

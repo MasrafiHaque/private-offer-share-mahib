@@ -15,7 +15,7 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
-    // ---------- PRODUCTS ----------
+    // ---------- PRODUCTS (Updated for multi-source) ----------
     match /products/{productId} {
       allow read: if true;
       allow create: if isAdmin() &&
@@ -23,8 +23,15 @@ service cloud.firestore {
         request.resource.data.name.size() > 0 &&
         request.resource.data.currentPrice is number &&
         request.resource.data.currentPrice >= 0 &&
-        request.resource.data.affiliateLink is string;
+        request.resource.data.source in ['daraz', 'external', 'own'] &&
+        request.resource.data.status in ['active', 'inactive'];
       allow update, delete: if isAdmin();
+    }
+
+    // ---------- PRODUCT SOURCES (New Collection) ----------
+    match /productSources/{sourceId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
     }
 
     // ---------- CATEGORIES ----------
@@ -50,7 +57,7 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // ---------- ANALYTICS (tracking) ----------
+    // ---------- ANALYTICS ----------
     match /analytics/{date} {
       allow read: if isAdmin();
       allow create, update: if true;
@@ -85,10 +92,18 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
-    // ---------- AUTOMATION STATUS (Price Update Progress) ----------
+    // ---------- AUTOMATION STATUS ----------
     match /automationStatus/{doc} {
       allow read: if isAdmin();
-      allow write: if false; // শুধু Admin SDK (Cloud Function / GitHub Action) লিখতে পারবে
+      allow write: if false;
+    }
+
+    // ---------- CASH ON DELIVERY ORDERS ----------
+    match /codOrders/{orderId} {
+      allow read: if isAdmin();
+      allow create: if isAuthenticated();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
     }
 
     // ---------- DEFAULT DENY ----------

@@ -4,8 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Private Offer Share Admin Panel</title>
-<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<meta name="robots" content="noindex, nofollow">
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
@@ -17,6 +18,7 @@
   --bg:#0F0F12; --panel:#1A1A1E; --panel-2:#212126; --border:#2D2D32;
   --text:#F5F3EF; --text-muted:#9CA3AF;
   --radius:12px;
+  --source-daraz:#F57224; --source-external:#3B82F6; --source-own:#10B981;
 }
 [data-theme="light"]{
   --bg:#F7F6F3; --panel:#FFFFFF; --panel-2:#F1EFEA; --border:#E7E2D8; --text:#17140F; --text-muted:#6B6459;
@@ -30,11 +32,13 @@ a{color:inherit;text-decoration:none;}
 .center-screen{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg);z-index:9999;}
 .spinner{width:40px;height:40px;border:3px solid rgba(255,255,255,0.15);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
-.login-box{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:2rem;width:100%;max-width:360px;}
-.login-box h1{font-size:1.3rem;margin-bottom:1.2rem;}
+.login-box{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:2rem;width:100%;max-width:380px;}
+.login-box h1{font-size:1.3rem;margin-bottom:.3rem;text-align:center;}
+.login-box .subtitle{text-align:center;color:var(--text-muted);font-size:.85rem;margin-bottom:1.2rem;}
 .form-group{margin-bottom:1rem;}
 .form-group label{display:block;font-size:.85rem;color:var(--text-muted);margin-bottom:.35rem;}
-.form-group input,.form-group select,.form-group textarea{width:100%;padding:.65rem .8rem;background:var(--panel-2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:.95rem;}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:.65rem .8rem;background:var(--panel-2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:.95rem;font-family:inherit;}
+.form-group textarea{resize:vertical;min-height:70px;}
 .error-text{color:#EF4444;font-size:.85rem;margin-top:.5rem;min-height:1.1em;}
 
 /* Layout */
@@ -45,6 +49,7 @@ a{color:inherit;text-decoration:none;}
 .nav-item{display:flex;align-items:center;gap:.7rem;padding:.7rem .9rem;color:var(--text-muted);border-radius:8px;margin-bottom:.2rem;cursor:pointer;font-size:.92rem;font-weight:600;border:none;background:none;width:100%;text-align:left;}
 .nav-item:hover{background:var(--panel-2);color:var(--text);}
 .nav-item.active{background:var(--gold);color:#1a1103;}
+.nav-item .badge-count{background:var(--orange);color:white;font-size:.7rem;padding:.15rem .5rem;border-radius:999px;margin-left:auto;}
 .sidebar-bottom{margin-top:auto;padding-top:1rem;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:.5rem;}
 .main-content{flex:1;margin-left:240px;padding:1.5rem 1.75rem;}
 
@@ -61,7 +66,7 @@ a{color:inherit;text-decoration:none;}
 .page-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.3rem;flex-wrap:wrap;gap:.7rem;}
 .page-header h1{font-size:1.4rem;}
 
-.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-bottom:1.5rem;}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;margin-bottom:1.5rem;}
 .stat-card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:1.2rem;}
 .stat-card .icon{font-size:1.3rem;margin-bottom:.4rem;}
 .stat-card h3{color:var(--text-muted);font-size:.82rem;font-weight:600;margin-bottom:.3rem;}
@@ -78,36 +83,60 @@ td{padding:.7rem .9rem;border-top:1px solid var(--border);font-size:.88rem;}
 tr:hover td{background:var(--panel-2);}
 .thumb{width:38px;height:38px;border-radius:6px;object-fit:cover;background:var(--panel-2);}
 
-.btn{padding:.55rem 1rem;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:.85rem;font-family:inherit;}
+.btn{padding:.55rem 1rem;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:.85rem;font-family:inherit;transition:transform .15s,opacity .15s;}
+.btn:hover{transform:translateY(-1px);opacity:.9;}
 .btn-primary{background:linear-gradient(135deg,var(--gold),var(--orange));color:#1a1103;}
 .btn-danger{background:#EF4444;color:white;}
 .btn-success{background:#10B981;color:white;}
 .btn-outline{background:transparent;border:1.5px solid var(--border);color:var(--text);}
 .btn-sm{padding:.35rem .6rem;font-size:.78rem;margin-right:.3rem;}
-.search-input{padding:.55rem .9rem;border-radius:8px;border:1px solid var(--border);background:var(--panel-2);color:var(--text);font-size:.88rem;min-width:220px;}
+.search-input{padding:.55rem .9rem;border-radius:8px;border:1px solid var(--border);background:var(--panel-2);color:var(--text);font-size:.88rem;min-width:200px;font-family:inherit;}
 
-.badge{padding:.2rem .55rem;border-radius:999px;font-size:.72rem;font-weight:700;}
+.badge{padding:.2rem .55rem;border-radius:999px;font-size:.72rem;font-weight:700;white-space:nowrap;}
 .badge-active{background:rgba(16,185,129,.18);color:#10B981;}
 .badge-inactive{background:rgba(239,68,68,.18);color:#EF4444;}
 .badge-admin{background:rgba(255,159,10,.18);color:var(--gold);}
 .badge-banned{background:rgba(239,68,68,.18);color:#EF4444;}
+.badge-pending{background:rgba(59,130,246,.18);color:#3B82F6;}
+.badge-source-daraz{background:rgba(245,114,36,.18);color:var(--source-daraz);}
+.badge-source-external{background:rgba(59,130,246,.18);color:var(--source-external);}
+.badge-source-own{background:rgba(16,185,129,.18);color:var(--source-own);}
+
+/* Toggle Switch */
+.toggle-wrap{display:flex;align-items:center;gap:.5rem;}
+.toggle-switch{position:relative;width:44px;height:24px;flex-shrink:0;}
+.toggle-switch input{opacity:0;width:0;height:0;}
+.toggle-slider{position:absolute;cursor:pointer;inset:0;background:var(--panel-2);border:1px solid var(--border);border-radius:24px;transition:.3s;}
+.toggle-slider:before{position:absolute;content:"";height:18px;width:18px;left:2px;bottom:2px;background:#999;border-radius:50%;transition:.3s;}
+.toggle-switch input:checked+.toggle-slider{background:var(--gold);border-color:var(--gold);}
+.toggle-switch input:checked+.toggle-slider:before{transform:translateX(20px);background:white;}
 
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.65);display:none;align-items:center;justify-content:center;z-index:1000;padding:1rem;}
 .modal.active{display:flex;}
-.modal-content{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:1.6rem;max-width:520px;width:100%;max-height:85vh;overflow-y:auto;}
+.modal-content{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:1.6rem;max-width:550px;width:100%;max-height:85vh;overflow-y:auto;}
 .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.1rem;}
-.modal-close{background:var(--panel-2);color:var(--text);border:none;width:30px;height:30px;border-radius:50%;font-size:1rem;}
+.modal-close{background:var(--panel-2);color:var(--text);border:none;width:30px;height:30px;border-radius:50%;font-size:1rem;cursor:pointer;}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:.8rem;}
 
-.img-drop{border:2px dashed var(--border);border-radius:10px;padding:1rem;text-align:center;color:var(--text-muted);font-size:.85rem;cursor:pointer;margin-bottom:1rem;}
+.img-drop{border:2px dashed var(--border);border-radius:10px;padding:1rem;text-align:center;color:var(--text-muted);font-size:.85rem;cursor:pointer;margin-bottom:1rem;transition:border-color .2s;}
+.img-drop:hover{border-color:var(--gold);}
 .img-drop img{max-width:100%;max-height:120px;border-radius:8px;margin-top:.5rem;}
 
 .toast-wrap{position:fixed;bottom:1.2rem;right:1.2rem;z-index:2000;display:flex;flex-direction:column;gap:.5rem;}
-.toast{padding:.7rem 1.1rem;border-radius:8px;color:white;font-size:.88rem;box-shadow:0 10px 24px rgba(0,0,0,.25);}
+.toast{padding:.7rem 1.1rem;border-radius:8px;color:white;font-size:.88rem;box-shadow:0 10px 24px rgba(0,0,0,.25);animation:toastIn .22s ease;}
 .toast.success{background:#10B981;}
 .toast.error{background:#EF4444;}
+@keyframes toastIn{from{transform:translateX(30px);opacity:0;}to{transform:none;opacity:1;}}
 
 .empty-row td{text-align:center;padding:1.6rem;color:var(--text-muted);}
+
+pre{background:#0b0b0c;border:1px solid var(--border);border-radius:8px;padding:.9rem;max-height:280px;overflow-y:auto;font-size:.8rem;line-height:1.6;white-space:pre-wrap;word-break:break-word;color:#c9c9c9;margin:0;font-family:monospace;}
+
+.status-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:.3rem;}
+.status-dot.running{background:#3B82F6;animation:pulse 1.2s infinite;}
+.status-dot.completed{background:#10B981;}
+.status-dot.failed{background:#EF4444;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
 
 @media (max-width:820px){
   .mobile-topbar{display:flex;}
@@ -138,14 +167,13 @@ tr:hover td{background:var(--panel-2);}
 <!-- Login Gate -->
 <div class="center-screen hidden" id="loginScreen">
   <div class="login-box">
-    <img src="assets/images/logo.png" alt="Private Offer Share" style="width:70px;height:70px;object-fit:contain;display:block;margin:0 auto .8rem;">
-    <h1 style="text-align:center;">Private Offer Share Admin Login</h1>
+    <img src="assets/images/logo.png" alt="Private Offer Share" style="width:60px;height:60px;object-fit:contain;display:block;margin:0 auto .6rem;">
+    <h1>Admin Login</h1>
+    <p class="subtitle">Private Offer Share Control Panel</p>
     <div class="form-group"><label>Email</label><input type="email" id="adminEmail" placeholder="admin@example.com"></div>
     <div class="form-group"><label>Password</label><input type="password" id="adminPassword" placeholder="••••••••"></div>
     <button class="btn btn-primary" style="width:100%;" onclick="adminLogin()">Login</button>
     <div class="error-text" id="loginError"></div>
-    <hr style="border-color:var(--border);margin:1rem 0;">
-    <button class="btn btn-outline" style="width:100%;" onclick="makeMeAdmin()">প্রথমবার? নিজেকে Admin বানান</button>
   </div>
 </div>
 
@@ -165,7 +193,9 @@ tr:hover td{background:var(--panel-2);}
     <nav>
       <button class="nav-item active" data-page="dashboard"><i class="fas fa-chart-line"></i> <span>Dashboard</span></button>
       <button class="nav-item" data-page="products"><i class="fas fa-box"></i> <span>Products</span></button>
+      <button class="nav-item" data-page="sources"><i class="fas fa-layer-group"></i> <span>Product Sources</span></button>
       <button class="nav-item" data-page="categories"><i class="fas fa-tags"></i> <span>Categories</span></button>
+      <button class="nav-item" data-page="orders"><i class="fas fa-truck"></i> <span>COD Orders</span> <span class="badge-count" id="pendingOrderCount" style="display:none;">0</span></button>
       <button class="nav-item" data-page="users"><i class="fas fa-users"></i> <span>Users</span></button>
       <button class="nav-item" data-page="analytics"><i class="fas fa-chart-bar"></i> <span>Analytics</span></button>
       <button class="nav-item" data-page="settings"><i class="fas fa-cog"></i> <span>Settings</span></button>
@@ -186,8 +216,8 @@ tr:hover td{background:var(--panel-2);}
         <div class="stat-card"><div class="icon">👥</div><h3>Total Users</h3><div class="value" id="statUsers">–</div></div>
         <div class="stat-card"><div class="icon">🖱️</div><h3>Buy Clicks (Today)</h3><div class="value" id="statClicks">–</div></div>
         <div class="stat-card"><div class="icon">👁️</div><h3>Visits (Today)</h3><div class="value" id="statVisits">–</div></div>
-        <div class="stat-card"><div class="icon">📢</div><h3>Telegram Clicks (Today)</h3><div class="value" id="statTelegram">–</div></div>
-        <div class="stat-card"><div class="icon">🆕</div><h3>New Users (Today)</h3><div class="value" id="statNewUsers">–</div></div>
+        <div class="stat-card"><div class="icon">📢</div><h3>Telegram Clicks</h3><div class="value" id="statTelegram">–</div></div>
+        <div class="stat-card"><div class="icon">📋</div><h3>COD Orders (Pending)</h3><div class="value" id="statCODPending">–</div></div>
       </div>
       <div class="chart-box"><h3>Weekly Traffic (Visits)</h3><canvas id="trafficChart"></canvas></div>
 
@@ -195,16 +225,18 @@ tr:hover td{background:var(--panel-2);}
         <h3 style="margin:0 0 .6rem;">💰 Daraz Price Auto-Update</h3>
         <div style="font-size:.85rem;color:var(--text-muted);margin-bottom:.8rem;">
           প্রতিদিন রাত ৩টায় স্বয়ংক্রিয়ভাবে চলে। এখনই চালাতে চাইলে
-          <a href="https://github.com/MasrafiHaque/private-offer-share-mahib/actions/workflows/update-prices.yml" target="_blank" style="color:var(--gold);">GitHub Actions-এ গিয়ে "Run workflow"</a> চাপুন — নিচে তার Progress লাইভ দেখাবে।
+          <a href="https://github.com/MasrafiHaque/private-offer-share-mahib/actions/workflows/update-prices.yml" target="_blank" style="color:var(--gold);">GitHub Actions-এ গিয়ে "Run workflow"</a> চাপুন।
         </div>
-        <div id="updateStatusBadge" style="margin-bottom:.6rem;font-size:.85rem;color:var(--text-muted);">এখনো কোনো Update চালানো হয়নি।</div>
+        <div id="updateStatusBadge" style="margin-bottom:.6rem;font-size:.85rem;color:var(--text-muted);">
+          <span class="status-dot" id="updateStatusDot"></span> <span id="updateStatusText">এখনো কোনো Update চালানো হয়নি।</span>
+        </div>
         <div id="updateProgressWrap" style="display:none;margin-bottom:.6rem;">
           <div style="background:var(--panel-2);border-radius:6px;overflow:hidden;height:8px;">
             <div id="updateProgressBar" style="height:100%;width:0%;background:linear-gradient(135deg,var(--gold),var(--orange));transition:width .3s;"></div>
           </div>
           <div style="font-size:.78rem;color:var(--text-muted);margin-top:.3rem;" id="updateProgressText"></div>
         </div>
-        <pre id="updateLogPanel" style="background:#0b0b0c;border:1px solid var(--border);border-radius:8px;padding:.9rem;max-height:280px;overflow-y:auto;font-size:.8rem;line-height:1.6;white-space:pre-wrap;word-break:break-word;color:#c9c9c9;margin:0;">এখানে Log দেখানো হবে যখন Update চালানো হবে।</pre>
+        <pre id="updateLogPanel">এখানে Log দেখানো হবে যখন Update চালানো হবে।</pre>
       </div>
     </div>
 
@@ -212,15 +244,33 @@ tr:hover td{background:var(--panel-2);}
     <div class="page" id="page-products">
       <div class="page-header">
         <h1>📦 Product Management</h1>
-        <div style="display:flex;gap:.6rem;">
+        <div style="display:flex;gap:.6rem;flex-wrap:wrap;">
+          <select id="productSourceFilter" style="padding:.55rem .9rem;border-radius:8px;border:1px solid var(--border);background:var(--panel-2);color:var(--text);font-size:.88rem;font-family:inherit;" onchange="renderProductsTable()">
+            <option value="all">সব সোর্স</option>
+            <option value="daraz">Daraz</option>
+            <option value="external">অন্যান্য প্রতিষ্ঠান</option>
+            <option value="own">আমাদের প্রোডাক্ট</option>
+          </select>
           <input class="search-input" id="productSearch" placeholder="প্রোডাক্ট খুঁজুন...">
           <button class="btn btn-primary" onclick="openProductModal()"><i class="fas fa-plus"></i> Add Product</button>
         </div>
       </div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th></th><th>নাম</th><th>দাম</th><th>Category</th><th>Auto-Track</th><th>Clicks</th><th>Status</th><th>Actions</th></tr></thead>
-          <tbody id="productsTable"><tr class="empty-row"><td colspan="8">Loading...</td></tr></tbody>
+          <thead><tr><th></th><th>নাম</th><th>দাম</th><th>Source</th><th>Category</th><th>Auto-Track</th><th>Clicks</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="productsTable"><tr class="empty-row"><td colspan="9">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Product Sources (New Page) -->
+    <div class="page" id="page-sources">
+      <div class="page-header"><h1>🔌 Product Sources</h1></div>
+      <p style="color:var(--text-muted);margin-bottom:1rem;">কোন কোন সোর্সের প্রোডাক্ট User Page-এ দেখাবে তা এখান থেকে On/Off করুন।</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Source</th><th>Label</th><th>Status</th><th>Auto Price Track</th><th>Products Count</th><th>Toggle</th></tr></thead>
+          <tbody id="sourcesTable"><tr class="empty-row"><td colspan="6">Loading...</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -235,6 +285,26 @@ tr:hover td{background:var(--panel-2);}
         <table>
           <thead><tr><th>Icon</th><th>নাম</th><th>Products</th><th>Actions</th></tr></thead>
           <tbody id="categoriesTable"><tr class="empty-row"><td colspan="4">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- COD Orders (New Page) -->
+    <div class="page" id="page-orders">
+      <div class="page-header">
+        <h1>📦 Cash on Delivery Orders</h1>
+        <select id="orderStatusFilter" style="padding:.55rem .9rem;border-radius:8px;border:1px solid var(--border);background:var(--panel-2);color:var(--text);font-size:.88rem;font-family:inherit;" onchange="renderOrdersTable()">
+          <option value="pending">Pending</option>
+          <option value="confirmed">Confirmed</option>
+          <option value="delivered">Delivered</option>
+          <option value="cancelled">Cancelled</option>
+          <option value="all">All Orders</option>
+        </select>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Product</th><th>Customer</th><th>Phone</th><th>Address</th><th>Qty</th><th>Price</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="ordersTable"><tr class="empty-row"><td colspan="9">Loading...</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -263,20 +333,11 @@ tr:hover td{background:var(--panel-2);}
     <!-- Settings -->
     <div class="page" id="page-settings">
       <div class="page-header"><h1>⚙️ Site Settings</h1></div>
-      <div class="table-wrap" style="padding:1.3rem;max-width:520px;">
+      <div class="table-wrap" style="padding:1.3rem;max-width:550px;">
         <form id="settingsForm">
-          <div class="form-group"><label>Banner Title</label><input type="text" id="bannerTitle"></div>
+          <div class="form-group"><label>Banner Title (HTML supported)</label><input type="text" id="bannerTitle"></div>
           <div class="form-group"><label>Banner Subtitle</label><input type="text" id="bannerSubtitle"></div>
           <div class="form-group"><label>Telegram Channel Link</label><input type="url" id="telegramLinkInput" placeholder="https://t.me/yourchannel"></div>
-          <div class="form-group">
-            <label>Theme Preset</label>
-            <select id="themePreset">
-              <option value="orange">Golden Orange (Default)</option>
-              <option value="blue">Ocean Blue</option>
-              <option value="green">Forest Green</option>
-              <option value="purple">Royal Purple</option>
-            </select>
-          </div>
           <button type="submit" class="btn btn-primary" style="width:100%;">💾 Save Settings</button>
         </form>
       </div>
@@ -290,6 +351,11 @@ tr:hover td{background:var(--panel-2);}
     <div class="modal-header"><h2 id="productModalTitle">Add Product</h2><button class="modal-close" onclick="closeModal('productModal')">&times;</button></div>
     <form id="productForm">
       <input type="hidden" id="productId">
+      <div class="form-group"><label>Product Source *</label><select id="productSource" required onchange="onSourceChange()">
+        <option value="daraz">Daraz</option>
+        <option value="external">অন্যান্য প্রতিষ্ঠান</option>
+        <option value="own">আমাদের প্রোডাক্ট</option>
+      </select></div>
       <div class="img-drop" id="imgDropZone" onclick="document.getElementById('imgFileInput').click()">
         📷 ছবি Upload করতে ক্লিক করুন
         <input type="file" id="imgFileInput" accept="image/*" style="display:none;">
@@ -304,20 +370,32 @@ tr:hover td{background:var(--panel-2);}
         <div class="form-group"><label>Category</label><select id="productCategory"></select></div>
         <div class="form-group"><label>Status</label><select id="productStatus"><option value="active">Active</option><option value="inactive">Inactive</option></select></div>
       </div>
-      <div class="form-group"><label>Affiliate Link (Daraz) *</label><input type="url" id="affiliateLink" required></div>
-      <div class="form-group">
-        <label>Daraz Product Link (Price Auto-Check-এর জন্য)</label>
-        <input type="url" id="darazUrl" placeholder="https://www.daraz.com.bd/products/...">
+      <!-- Daraz Fields -->
+      <div id="darazFields">
+        <div class="form-group"><label>Affiliate Link (Daraz)</label><input type="url" id="affiliateLink" placeholder="https://www.daraz.com.bd/products/..."></div>
+        <div class="form-group"><label>Daraz Product Link (Price Auto-Check)</label><input type="url" id="darazUrl" placeholder="https://www.daraz.com.bd/products/..."></div>
+        <div class="form-group"><label class="toggle-wrap"><input type="checkbox" id="autoTrackPrice" style="width:auto;"> Auto-track price daily</label></div>
       </div>
-      <div class="form-group" style="display:flex;align-items:center;gap:.6rem;">
-        <input type="checkbox" id="autoTrackPrice" style="width:auto;">
-        <label style="margin:0;" for="autoTrackPrice">এই Product-এর দাম Daily Auto-Update হবে</label>
+      <!-- External Fields -->
+      <div id="externalFields" style="display:none;">
+        <p style="font-size:.82rem;color:var(--text-muted);margin-bottom:.8rem;">সোশ্যাল মিডিয়া / যোগাযোগের লিংকসমূহ:</p>
+        <div class="form-group"><label>Facebook Page/Profile</label><input type="url" id="extFacebook" placeholder="https://facebook.com/..."></div>
+        <div class="form-group"><label>Messenger Link</label><input type="url" id="extMessenger" placeholder="https://m.me/..."></div>
+        <div class="form-group"><label>WhatsApp Link</label><input type="url" id="extWhatsapp" placeholder="https://wa.me/8801..."></div>
+        <div class="form-group"><label>Website Link</label><input type="url" id="extWebsite" placeholder="https://..."></div>
       </div>
+      <!-- Own Fields -->
+      <div id="ownFields" style="display:none;">
+        <div class="form-group" style="background:rgba(16,185,129,.08);padding:.8rem;border-radius:8px;">
+          <strong>ℹ️ ক্যাশ অন ডেলিভারি</strong><br>
+          <span style="font-size:.82rem;color:var(--text-muted);">এই প্রোডাক্টের জন্য COD অর্ডার ফর্ম দেখাবে।</span>
+        </div>
+      </div>
+      <div class="form-group"><label>বিবরণ</label><textarea id="productDescription" rows="2"></textarea></div>
       <div class="form-group" id="lastCheckedInfo" style="display:none;">
-        <label>শেষ Check</label>
+        <label>শেষ Price Check</label>
         <div style="font-size:.85rem;color:var(--text-muted);" id="lastCheckedText">—</div>
       </div>
-      <div class="form-group"><label>বিবরণ</label><textarea id="productDescription" rows="3"></textarea></div>
       <button type="submit" class="btn btn-primary" style="width:100%;">💾 Save Product</button>
     </form>
   </div>
@@ -340,13 +418,21 @@ tr:hover td{background:var(--panel-2);}
 <script>
 /* ============================================
    Private Offer Share Admin Panel — Self-contained logic
-   (কোনো বাহ্যিক admin.js ফাইল ব্যবহার হয়নি)
+   (Updated: Multi-Source, Source Management, COD Orders)
    ============================================ */
 let adminUser = null;
 let productsCache = [];
 let categoriesCache = [];
 let usersCache = [];
+let ordersCache = [];
+let sourcesCache = [];
 let trafficChartRef, clicksChartRef, topProductsChartRef;
+
+const SOURCE_CONFIG = {
+  daraz: { label: "Daraz", color: "#F57224", icon: "fa-bolt", autoTrack: true },
+  external: { label: "অন্যান্য প্রতিষ্ঠান", color: "#3B82F6", icon: "fa-store", autoTrack: false },
+  own: { label: "আমাদের প্রোডাক্ট", color: "#10B981", icon: "fa-star", autoTrack: false }
+};
 
 function showToast(msg, type = "success") {
   let wrap = document.querySelector(".toast-wrap");
@@ -361,6 +447,7 @@ function formatPrice(n){ return "৳" + Number(n || 0).toLocaleString("en-BD"); 
 function todayKey(){ return new Date().toISOString().split("T")[0]; }
 function closeModal(id){ document.getElementById(id).classList.remove("active"); }
 function openModal(id){ document.getElementById(id).classList.add("active"); }
+function escapeHTML(str) { const d = document.createElement("div"); d.textContent = str ?? ""; return d.innerHTML; }
 
 /* ---------- Auth Gate ---------- */
 auth.onAuthStateChanged(async (user) => {
@@ -372,7 +459,6 @@ auth.onAuthStateChanged(async (user) => {
   }
   const doc = await db.collection("users").doc(user.uid).get();
   if (!doc.exists || doc.data().role !== "admin") {
-    document.getElementById("loginError").textContent = "";
     showToast("⛔ Access Denied — Admin Only", "error");
     await auth.signOut();
     document.getElementById("loginScreen").classList.remove("hidden");
@@ -387,6 +473,8 @@ auth.onAuthStateChanged(async (user) => {
   loadCategories();
   loadProducts();
   loadUsers();
+  loadOrders();
+  loadSources();
   loadSettings();
   startAutomationStatusListener();
 });
@@ -402,87 +490,7 @@ async function adminLogin() {
     err.textContent = "Login ব্যর্থ হয়েছে — Email/Password চেক করুন।";
   }
 }
-async function makeMeAdmin() {
-  const email = document.getElementById("adminEmail").value.trim();
-  const password = document.getElementById("adminPassword").value;
-  const err = document.getElementById("loginError");
-  err.textContent = "";
-  if (!email || !password) { err.textContent = "প্রথমে Email ও Password দিন।"; return; }
-  try {
-    let cred;
-    try {
-      cred = await auth.signInWithEmailAndPassword(email, password);
-    } catch {
-      cred = await auth.createUserWithEmailAndPassword(email, password);
-    }
-    await db.collection("users").doc(cred.user.uid).set({
-      name: "Admin", email, role: "admin", status: "active",
-      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      lastLogin: firebase.firestore.FieldValue.serverTimestamp()
-    }, { merge: true });
-    showToast("Admin তৈরি হয়েছে — এখন Reload করুন");
-    setTimeout(() => location.reload(), 1200);
-  } catch (e) {
-    err.textContent = "সমস্যা হয়েছে: " + e.message;
-  }
-}
 function adminLogout() { auth.signOut(); location.reload(); }
-
-/* ---------- Price Auto-Update — Live Log (Read-only Listener) ----------
-   Trigger এখনো GitHub Actions-এর "Run workflow" বাটন দিয়ে ম্যানুয়ালি অথবা
-   Daily Cron দিয়ে হয় — এখানে শুধু তার Progress লাইভ দেখানো হয়। */
-let automationStatusUnsub = null;
-
-function startAutomationStatusListener() {
-  if (automationStatusUnsub) return;
-  automationStatusUnsub = db.collection("automationStatus").doc("latest").onSnapshot((doc) => {
-    if (!doc.exists) return;
-    renderAutomationStatus(doc.data());
-  });
-}
-
-function renderAutomationStatus(data) {
-  const badge = document.getElementById("updateStatusBadge");
-  const progressWrap = document.getElementById("updateProgressWrap");
-  const progressBar = document.getElementById("updateProgressBar");
-  const progressText = document.getElementById("updateProgressText");
-  const logPanel = document.getElementById("updateLogPanel");
-  if (!badge) return;
-
-  const statusLabels = {
-    queued: "🟡 শুরু হচ্ছে...",
-    running: "🔵 চলছে...",
-    completed: "✅ শেষ হয়েছে",
-    failed: "❌ ব্যর্থ হয়েছে"
-  };
-  badge.textContent = statusLabels[data.status] || data.status || "—";
-
-  if (data.totalProducts > 0) {
-    progressWrap.style.display = "block";
-    const pct = Math.round(((data.processedCount || 0) / data.totalProducts) * 100);
-    progressBar.style.width = pct + "%";
-    progressText.textContent = `${data.processedCount || 0} / ${data.totalProducts} Product Check হয়েছে`;
-  } else {
-    progressWrap.style.display = "none";
-  }
-
-  if (Array.isArray(data.logs) && data.logs.length > 0) {
-    logPanel.textContent = data.logs.join("\n");
-    logPanel.scrollTop = logPanel.scrollHeight;
-  }
-}
-
-
-function initAdminTheme() {
-  const saved = localStorage.getItem("dn_admin_theme") || "dark";
-  document.documentElement.setAttribute("data-theme", saved);
-}
-function toggleAdminTheme() {
-  const cur = document.documentElement.getAttribute("data-theme") === "light" ? "light" : "dark";
-  const next = cur === "dark" ? "light" : "dark";
-  document.documentElement.setAttribute("data-theme", next);
-  localStorage.setItem("dn_admin_theme", next);
-}
 
 /* ---------- Navigation ---------- */
 function bindNav() {
@@ -494,6 +502,7 @@ function bindNav() {
       document.getElementById("page-" + btn.dataset.page).classList.add("active");
       if (btn.dataset.page === "analytics") loadAnalyticsCharts();
       if (btn.dataset.page === "dashboard") loadDashboard();
+      if (btn.dataset.page === "orders") renderOrdersTable();
       closeSidebar();
     });
   });
@@ -507,80 +516,161 @@ function closeSidebar() {
   document.getElementById("sidebarBackdrop").classList.remove("show");
 }
 
-/* ---------- Dashboard ---------- */
-async function loadDashboard() {
+/* ---------- Theme ---------- */
+function initAdminTheme() {
+  const saved = localStorage.getItem("dn_admin_theme") || "dark";
+  document.documentElement.setAttribute("data-theme", saved);
+}
+function toggleAdminTheme() {
+  const cur = document.documentElement.getAttribute("data-theme") === "light" ? "light" : "dark";
+  const next = cur === "dark" ? "light" : "dark";
+  document.documentElement.setAttribute("data-theme", next);
+  localStorage.setItem("dn_admin_theme", next);
+}
+
+/* ---------- Product Source Change (Modal) ---------- */
+function onSourceChange() {
+  const source = document.getElementById("productSource").value;
+  document.getElementById("darazFields").style.display = source === "daraz" ? "block" : "none";
+  document.getElementById("externalFields").style.display = source === "external" ? "block" : "none";
+  document.getElementById("ownFields").style.display = source === "own" ? "block" : "none";
+}
+
+/* ---------- Sources Management (New) ---------- */
+function loadSources() {
+  // Initialize sources if not exist
+  ["daraz", "external", "own"].forEach(async (id) => {
+    const doc = await db.collection("productSources").doc(id).get();
+    if (!doc.exists) {
+      await db.collection("productSources").doc(id).set({
+        label: SOURCE_CONFIG[id].label,
+        enabled: true,
+        autoTrackPrice: SOURCE_CONFIG[id].autoTrack,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    }
+  });
+
+  db.collection("productSources").onSnapshot((snap) => {
+    sourcesCache = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    renderSourcesTable();
+  });
+}
+
+function renderSourcesTable() {
+  const tbody = document.getElementById("sourcesTable");
+  const allSources = ["daraz", "external", "own"];
+  
+  tbody.innerHTML = allSources.map(id => {
+    const s = sourcesCache.find(x => x.id === id) || { id, enabled: true, label: SOURCE_CONFIG[id].label };
+    const count = productsCache.filter(p => p.source === id).length;
+    return `
+    <tr>
+      <td>
+        <span class="badge badge-source-${id}">${SOURCE_CONFIG[id].icon ? `<i class="fas ${SOURCE_CONFIG[id].icon}"></i>` : ""} ${id}</span>
+      </td>
+      <td>${escapeHTML(s.label || SOURCE_CONFIG[id].label)}</td>
+      <td><span class="badge ${s.enabled ? 'badge-active' : 'badge-inactive'}">${s.enabled ? 'Enabled' : 'Disabled'}</span></td>
+      <td>${SOURCE_CONFIG[id].autoTrack ? '<span class="badge badge-active">Yes (Auto)</span>' : '<span class="badge badge-inactive">No (Manual)</span>'}</td>
+      <td>${count}</td>
+      <td>
+        <label class="toggle-switch" style="display:inline-block;">
+          <input type="checkbox" ${s.enabled ? 'checked' : ''} onchange="toggleSource('${id}', this.checked)">
+          <span class="toggle-slider"></span>
+        </label>
+      </td>
+    </tr>`;
+  }).join("");
+}
+
+async function toggleSource(sourceId, enabled) {
   try {
-    const [productsSnap, usersSnap] = await Promise.all([
-      db.collection("products").get(),
-      db.collection("users").get()
-    ]);
-    document.getElementById("statProducts").textContent = productsSnap.size;
-    document.getElementById("statUsers").textContent = usersSnap.size;
-
-    const today = todayKey();
-    const analyticsDoc = await db.collection("analytics").doc(today).get();
-    const data = analyticsDoc.exists ? analyticsDoc.data() : {};
-    document.getElementById("statClicks").textContent = data.buyNowClicks || 0;
-    document.getElementById("statVisits").textContent = data.visits || 0;
-    document.getElementById("statTelegram").textContent = data.telegramClicks || 0;
-
-    let newUsersToday = 0;
-    usersSnap.forEach((d) => {
-      const c = d.data().createdAt;
-      if (c && c.toDate && c.toDate().toISOString().split("T")[0] === today) newUsersToday++;
+    await db.collection("productSources").doc(sourceId).update({ 
+      enabled,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     });
-    document.getElementById("statNewUsers").textContent = newUsersToday;
-
-    renderTrafficChart();
-  } catch (e) {
-    console.error(e);
+    showToast(`"${SOURCE_CONFIG[sourceId].label}" ${enabled ? 'Enabled' : 'Disabled'} হয়েছে`);
+  } catch (err) {
+    showToast("সমস্যা: " + err.message, "error");
   }
 }
 
-async function getLastNDaysAnalytics(n) {
-  const days = [];
-  for (let i = n - 1; i >= 0; i--) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    days.push(d.toISOString().split("T")[0]);
+/* ---------- COD Orders (New) ---------- */
+function loadOrders() {
+  db.collection("codOrders").orderBy("createdAt", "desc").onSnapshot((snap) => {
+    ordersCache = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    renderOrdersTable();
+    updatePendingOrderBadge();
+  });
+}
+
+function renderOrdersTable() {
+  const filter = document.getElementById("orderStatusFilter")?.value || "pending";
+  let list = filter === "all" ? ordersCache : ordersCache.filter(o => o.status === filter);
+  
+  const tbody = document.getElementById("ordersTable");
+  if (list.length === 0) {
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="9">কোনো অর্ডার নেই</td></tr>`;
+    return;
   }
-  const results = await Promise.all(days.map((d) => db.collection("analytics").doc(d).get()));
-  return days.map((d, i) => ({ date: d, ...(results[i].exists ? results[i].data() : {}) }));
+  
+  tbody.innerHTML = list.map(o => {
+    const date = o.createdAt?.toDate ? o.createdAt.toDate().toLocaleString("bn-BD") : "—";
+    const statusBadge = {
+      pending: '<span class="badge badge-pending">Pending</span>',
+      confirmed: '<span class="badge badge-active">Confirmed</span>',
+      delivered: '<span class="badge badge-active">Delivered</span>',
+      cancelled: '<span class="badge badge-inactive">Cancelled</span>'
+    }[o.status] || o.status;
+    
+    return `
+    <tr>
+      <td>${escapeHTML(o.productName || "—")}</td>
+      <td>${escapeHTML(o.customerName || "—")}</td>
+      <td>${escapeHTML(o.customerPhone || "—")}</td>
+      <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escapeHTML(o.customerAddress || '')}">${escapeHTML((o.customerAddress || "—").slice(0, 30))}</td>
+      <td>${o.quantity || 1}</td>
+      <td>${escapeHTML(o.productPrice || "—")}</td>
+      <td>${date}</td>
+      <td>${statusBadge}</td>
+      <td>
+        ${o.status === 'pending' ? `
+          <button class="btn btn-success btn-sm" onclick="updateOrderStatus('${o.id}','confirmed')">Confirm</button>
+          <button class="btn btn-danger btn-sm" onclick="updateOrderStatus('${o.id}','cancelled')">Cancel</button>
+        ` : o.status === 'confirmed' ? `
+          <button class="btn btn-primary btn-sm" onclick="updateOrderStatus('${o.id}','delivered')">Delivered</button>
+        ` : '—'}
+      </td>
+    </tr>`;
+  }).join("");
 }
 
-async function renderTrafficChart() {
-  const data = await getLastNDaysAnalytics(7);
-  const ctx = document.getElementById("trafficChart");
-  if (trafficChartRef) trafficChartRef.destroy();
-  trafficChartRef = new Chart(ctx, {
-    type: "line",
-    data: {
-      labels: data.map((d) => d.date.slice(5)),
-      datasets: [{ label: "Visits", data: data.map((d) => d.visits || 0), borderColor: "#FF9F0A", backgroundColor: "rgba(255,159,10,0.15)", fill: true, tension: 0.35 }]
-    },
-    options: { responsive: true, plugins: { legend: { display: false } } }
-  });
+async function updateOrderStatus(orderId, status) {
+  try {
+    await db.collection("codOrders").doc(orderId).update({ 
+      status,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    showToast(`Order ${status} হয়েছে`);
+  } catch (err) {
+    showToast("সমস্যা: " + err.message, "error");
+  }
 }
 
-/* ---------- Analytics page ---------- */
-async function loadAnalyticsCharts() {
-  const data = await getLastNDaysAnalytics(7);
-  const ctx1 = document.getElementById("clicksChart");
-  if (clicksChartRef) clicksChartRef.destroy();
-  clicksChartRef = new Chart(ctx1, {
-    type: "bar",
-    data: { labels: data.map((d) => d.date.slice(5)), datasets: [{ label: "Buy Clicks", data: data.map((d) => d.buyNowClicks || 0), backgroundColor: "#FF6B00" }] },
-    options: { responsive: true, plugins: { legend: { display: false } } }
-  });
-
-  const top = [...productsCache].sort((a, b) => (b.clickCount || 0) - (a.clickCount || 0)).slice(0, 6);
-  const ctx2 = document.getElementById("topProductsChart");
-  if (topProductsChartRef) topProductsChartRef.destroy();
-  topProductsChartRef = new Chart(ctx2, {
-    type: "bar",
-    data: { labels: top.map((p) => (p.name || "").slice(0, 18)), datasets: [{ label: "Clicks", data: top.map((p) => p.clickCount || 0), backgroundColor: "#FFC700" }] },
-    options: { indexAxis: "y", responsive: true, plugins: { legend: { display: false } } }
-  });
+function updatePendingOrderBadge() {
+  const count = ordersCache.filter(o => o.status === "pending").length;
+  const badge = document.getElementById("pendingOrderCount");
+  if (badge) {
+    if (count > 0) {
+      badge.textContent = count;
+      badge.style.display = "inline";
+    } else {
+      badge.style.display = "none";
+    }
+  }
+  // Dashboard stat
+  const statEl = document.getElementById("statCODPending");
+  if (statEl) statEl.textContent = count;
 }
 
 /* ---------- Products ---------- */
@@ -588,20 +678,30 @@ function loadProducts() {
   db.collection("products").orderBy("createdAt", "desc").onSnapshot((snap) => {
     productsCache = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
     renderProductsTable();
-  }, (err) => {
-    document.getElementById("productsTable").innerHTML = `<tr class="empty-row"><td colspan="8">লোড করতে সমস্যা: ${err.message}</td></tr>`;
+    renderSourcesTable(); // Update source product counts
   });
 }
+
 function renderProductsTable() {
+  const sourceFilter = document.getElementById("productSourceFilter")?.value || "all";
   const q = (document.getElementById("productSearch")?.value || "").toLowerCase();
-  const list = productsCache.filter((p) => (p.name || "").toLowerCase().includes(q));
+  
+  let list = productsCache;
+  if (sourceFilter !== "all") list = list.filter(p => p.source === sourceFilter);
+  if (q) list = list.filter(p => (p.name || "").toLowerCase().includes(q));
+  
   const tbody = document.getElementById("productsTable");
-  if (list.length === 0) { tbody.innerHTML = `<tr class="empty-row"><td colspan="8">কোনো প্রোডাক্ট নেই</td></tr>`; return; }
+  if (list.length === 0) { 
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="9">কোনো প্রোডাক্ট নেই</td></tr>`; 
+    return; 
+  }
+  
   tbody.innerHTML = list.map((p) => {
+    const source = p.source || "daraz";
     let trackBadge = `<span class="badge" style="background:rgba(156,163,175,.18);color:var(--text-muted);">Off</span>`;
     if (p.autoTrackPrice) {
       if (p.lastCheckStatus === "failed") {
-        trackBadge = `<span class="badge badge-banned" title="${escapeHTML(p.lastCheckError || "")}">On · ব্যর্থ</span>`;
+        trackBadge = `<span class="badge badge-banned" title="${escapeHTML(p.lastCheckError || '')}">On · ব্যর্থ</span>`;
       } else if (p.lastCheckStatus === "success") {
         trackBadge = `<span class="badge badge-active">On · ঠিক আছে</span>`;
       } else {
@@ -613,6 +713,7 @@ function renderProductsTable() {
       <td><img class="thumb" src="${p.image || 'assets/images/empty-box.svg'}" onerror="this.src='assets/images/empty-box.svg'"></td>
       <td>${escapeHTML(p.name)}</td>
       <td>${formatPrice(p.currentPrice)}</td>
+      <td><span class="badge badge-source-${source}">${SOURCE_CONFIG[source]?.label || source}</span></td>
       <td>${escapeHTML(categoriesCache.find((c) => c.id === p.category)?.name || "—")}</td>
       <td>${trackBadge}</td>
       <td>${p.clickCount || 0}</td>
@@ -624,9 +725,6 @@ function renderProductsTable() {
     </tr>`;
   }).join("");
 }
-document.addEventListener("input", (e) => { if (e.target.id === "productSearch") renderProductsTable(); });
-
-function escapeHTML(str) { const d = document.createElement("div"); d.textContent = str ?? ""; return d.innerHTML; }
 
 let uploadedImageUrl = "";
 function openProductModal() {
@@ -636,15 +734,20 @@ function openProductModal() {
   document.getElementById("imgPreviewWrap").innerHTML = "";
   document.getElementById("lastCheckedInfo").style.display = "none";
   uploadedImageUrl = "";
+  document.getElementById("productSource").value = "daraz";
+  onSourceChange();
   populateCategorySelect();
   openModal("productModal");
 }
+
 function editProduct(id) {
   const p = productsCache.find((x) => x.id === id);
   if (!p) return;
   populateCategorySelect();
   document.getElementById("productModalTitle").textContent = "Edit Product";
   document.getElementById("productId").value = id;
+  document.getElementById("productSource").value = p.source || "daraz";
+  onSourceChange();
   document.getElementById("productName").value = p.name || "";
   document.getElementById("currentPrice").value = p.currentPrice || "";
   document.getElementById("originalPrice").value = p.originalPrice || "";
@@ -654,6 +757,14 @@ function editProduct(id) {
   document.getElementById("darazUrl").value = p.darazUrl || "";
   document.getElementById("autoTrackPrice").checked = !!p.autoTrackPrice;
   document.getElementById("productDescription").value = p.description || "";
+  
+  // External fields
+  const sl = p.socialLinks || {};
+  document.getElementById("extFacebook").value = sl.facebook || "";
+  document.getElementById("extMessenger").value = sl.messenger || "";
+  document.getElementById("extWhatsapp").value = sl.whatsapp || "";
+  document.getElementById("extWebsite").value = sl.website || "";
+  
   uploadedImageUrl = p.image || "";
   document.getElementById("imgPreviewWrap").innerHTML = uploadedImageUrl ? `<img src="${uploadedImageUrl}">` : "";
 
@@ -668,16 +779,19 @@ function editProduct(id) {
   }
   openModal("productModal");
 }
+
 async function deleteProduct(id) {
   if (!confirm("এই প্রোডাক্টটি ডিলিট করতে চান?")) return;
   await db.collection("products").doc(id).delete();
   showToast("প্রোডাক্ট ডিলিট হয়েছে");
 }
+
 function populateCategorySelect() {
   const sel = document.getElementById("productCategory");
   sel.innerHTML = `<option value="">— Category বাছাই করুন —</option>` + categoriesCache.map((c) => `<option value="${c.id}">${escapeHTML(c.name)}</option>`).join("");
 }
 
+// Image upload
 document.getElementById("imgFileInput").addEventListener("change", async (e) => {
   const file = e.target.files[0];
   if (!file) return;
@@ -700,22 +814,41 @@ document.getElementById("imgFileInput").addEventListener("change", async (e) => 
   }
 });
 
+// Product Form Submit
 document.getElementById("productForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   const id = document.getElementById("productId").value;
+  const source = document.getElementById("productSource").value;
+  
   const payload = {
+    source,
     name: document.getElementById("productName").value.trim(),
     currentPrice: Number(document.getElementById("currentPrice").value),
     originalPrice: Number(document.getElementById("originalPrice").value) || null,
     category: document.getElementById("productCategory").value || null,
     status: document.getElementById("productStatus").value,
-    affiliateLink: document.getElementById("affiliateLink").value.trim(),
-    darazUrl: document.getElementById("darazUrl").value.trim() || null,
-    autoTrackPrice: document.getElementById("autoTrackPrice").checked,
     description: document.getElementById("productDescription").value.trim(),
     image: uploadedImageUrl || null,
     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
   };
+
+  // Source-specific fields
+  if (source === "daraz") {
+    payload.affiliateLink = document.getElementById("affiliateLink").value.trim();
+    payload.darazUrl = document.getElementById("darazUrl").value.trim() || null;
+    payload.autoTrackPrice = document.getElementById("autoTrackPrice").checked;
+  } else if (source === "external") {
+    payload.socialLinks = {
+      facebook: document.getElementById("extFacebook").value.trim() || null,
+      messenger: document.getElementById("extMessenger").value.trim() || null,
+      whatsapp: document.getElementById("extWhatsapp").value.trim() || null,
+      website: document.getElementById("extWebsite").value.trim() || null
+    };
+    payload.autoTrackPrice = false;
+  } else if (source === "own") {
+    payload.autoTrackPrice = false;
+  }
+
   try {
     if (id) {
       await db.collection("products").doc(id).update(payload);
@@ -792,6 +925,7 @@ function loadUsers() {
   db.collection("users").orderBy("createdAt", "desc").onSnapshot((snap) => {
     usersCache = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
     renderUsersTable();
+    updateDashboardStats();
   });
 }
 function renderUsersTable() {
@@ -807,26 +941,137 @@ function renderUsersTable() {
       <td><span class="badge ${u.status === "banned" ? "badge-banned" : "badge-active"}">${u.status || "active"}</span></td>
       <td>${u.createdAt && u.createdAt.toDate ? u.createdAt.toDate().toLocaleDateString("bn-BD") : "—"}</td>
       <td>
-        ${u.status === "banned"
+        ${u.role !== "admin" ? (u.status === "banned"
           ? `<button class="btn btn-success btn-sm" onclick="setUserStatus('${u.id}','active')">Unban</button>`
-          : `<button class="btn btn-danger btn-sm" onclick="setUserStatus('${u.id}','banned')">Ban</button>`}
+          : `<button class="btn btn-danger btn-sm" onclick="setUserStatus('${u.id}','banned')">Ban</button>`) : "—"}
       </td>
     </tr>`).join("");
 }
-document.addEventListener("input", (e) => { if (e.target.id === "userSearch") renderUsersTable(); });
 async function setUserStatus(id, status) {
   await db.collection("users").doc(id).update({ status });
   showToast(status === "banned" ? "User Ban করা হয়েছে" : "User Unban করা হয়েছে");
+}
+
+/* ---------- Dashboard ---------- */
+async function loadDashboard() {
+  updateDashboardStats();
+  renderTrafficChart();
+}
+
+async function updateDashboardStats() {
+  try {
+    document.getElementById("statProducts").textContent = productsCache.length;
+    document.getElementById("statUsers").textContent = usersCache.length;
+
+    const today = todayKey();
+    const analyticsDoc = await db.collection("analytics").doc(today).get();
+    const data = analyticsDoc.exists ? analyticsDoc.data() : {};
+    document.getElementById("statClicks").textContent = data.buyNowClicks || 0;
+    document.getElementById("statVisits").textContent = data.visits || 0;
+    document.getElementById("statTelegram").textContent = data.telegramClicks || 0;
+    
+    const pendingCount = ordersCache.filter(o => o.status === "pending").length;
+    document.getElementById("statCODPending").textContent = pendingCount;
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+async function getLastNDaysAnalytics(n) {
+  const days = [];
+  for (let i = n - 1; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    days.push(d.toISOString().split("T")[0]);
+  }
+  const results = await Promise.all(days.map((d) => db.collection("analytics").doc(d).get()));
+  return days.map((d, i) => ({ date: d, ...(results[i].exists ? results[i].data() : {}) }));
+}
+
+async function renderTrafficChart() {
+  const data = await getLastNDaysAnalytics(7);
+  const ctx = document.getElementById("trafficChart");
+  if (trafficChartRef) trafficChartRef.destroy();
+  trafficChartRef = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: data.map((d) => d.date.slice(5)),
+      datasets: [{ label: "Visits", data: data.map((d) => d.visits || 0), borderColor: "#FF9F0A", backgroundColor: "rgba(255,159,10,0.15)", fill: true, tension: 0.35 }]
+    },
+    options: { responsive: true, plugins: { legend: { display: false } } }
+  });
+}
+
+async function loadAnalyticsCharts() {
+  const data = await getLastNDaysAnalytics(7);
+  const ctx1 = document.getElementById("clicksChart");
+  if (clicksChartRef) clicksChartRef.destroy();
+  clicksChartRef = new Chart(ctx1, {
+    type: "bar",
+    data: { labels: data.map((d) => d.date.slice(5)), datasets: [{ label: "Buy Clicks", data: data.map((d) => d.buyNowClicks || 0), backgroundColor: "#FF6B00" }] },
+    options: { responsive: true, plugins: { legend: { display: false } } }
+  });
+
+  const top = [...productsCache].sort((a, b) => (b.clickCount || 0) - (a.clickCount || 0)).slice(0, 6);
+  const ctx2 = document.getElementById("topProductsChart");
+  if (topProductsChartRef) topProductsChartRef.destroy();
+  topProductsChartRef = new Chart(ctx2, {
+    type: "bar",
+    data: { labels: top.map((p) => (p.name || "").slice(0, 18)), datasets: [{ label: "Clicks", data: top.map((p) => p.clickCount || 0), backgroundColor: "#FFC700" }] },
+    options: { indexAxis: "y", responsive: true, plugins: { legend: { display: false } } }
+  });
+}
+
+/* ---------- Automation Status Listener ---------- */
+let automationStatusUnsub = null;
+function startAutomationStatusListener() {
+  if (automationStatusUnsub) return;
+  automationStatusUnsub = db.collection("automationStatus").doc("latest").onSnapshot((doc) => {
+    if (!doc.exists) return;
+    renderAutomationStatus(doc.data());
+  });
+}
+
+function renderAutomationStatus(data) {
+  const dot = document.getElementById("updateStatusDot");
+  const text = document.getElementById("updateStatusText");
+  const progressWrap = document.getElementById("updateProgressWrap");
+  const progressBar = document.getElementById("updateProgressBar");
+  const progressText = document.getElementById("updateProgressText");
+  const logPanel = document.getElementById("updateLogPanel");
+  if (!dot || !text) return;
+
+  dot.className = "status-dot " + data.status;
+  const statusLabels = {
+    queued: "শুরু হচ্ছে...",
+    running: "চলছে...",
+    completed: "শেষ হয়েছে",
+    failed: "ব্যর্থ হয়েছে"
+  };
+  text.textContent = statusLabels[data.status] || data.status || "—";
+
+  if (data.totalProducts > 0) {
+    progressWrap.style.display = "block";
+    const pct = Math.round(((data.processedCount || 0) / data.totalProducts) * 100);
+    progressBar.style.width = pct + "%";
+    progressText.textContent = `${data.processedCount || 0} / ${data.totalProducts} Product Check হয়েছে`;
+  } else {
+    progressWrap.style.display = "none";
+  }
+
+  if (Array.isArray(data.logs) && data.logs.length > 0) {
+    logPanel.textContent = data.logs.join("\n");
+    logPanel.scrollTop = logPanel.scrollHeight;
+  }
 }
 
 /* ---------- Settings ---------- */
 async function loadSettings() {
   const doc = await db.collection("siteSettings").doc("general").get();
   const s = doc.exists ? doc.data() : {};
-  document.getElementById("bannerTitle").value = s.bannerTitle || "";
-  document.getElementById("bannerSubtitle").value = s.bannerSubtitle || "";
-  document.getElementById("telegramLinkInput").value = s.telegramLink || "";
-  document.getElementById("themePreset").value = s.theme || "orange";
+  document.getElementById("bannerTitle").value = s.bannerTitle || "প্রতিদিনের প্রয়োজনে <em>সেরা দাম</em>, এক জায়গায়";
+  document.getElementById("bannerSubtitle").value = s.bannerSubtitle || "Daraz সহ আরও অনেক প্রতিষ্ঠানের বাছাই করা সেরা ডিলগুলো আমরা প্রতিদিন আপনার জন্য নিয়ে আসি।";
+  document.getElementById("telegramLinkInput").value = s.telegramLink || TELEGRAM_LINK || "";
 }
 document.getElementById("settingsForm").addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -835,12 +1080,18 @@ document.getElementById("settingsForm").addEventListener("submit", async (e) => 
       bannerTitle: document.getElementById("bannerTitle").value.trim(),
       bannerSubtitle: document.getElementById("bannerSubtitle").value.trim(),
       telegramLink: document.getElementById("telegramLinkInput").value.trim(),
-      theme: document.getElementById("themePreset").value,
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     }, { merge: true });
     showToast("Settings Save হয়েছে");
   } catch (err) { showToast("সমস্যা: " + err.message, "error"); }
 });
+
+// Search listeners
+document.addEventListener("input", (e) => {
+  if (e.target.id === "productSearch") renderProductsTable();
+  if (e.target.id === "userSearch") renderUsersTable();
+});
+document.getElementById("productSourceFilter")?.addEventListener("change", renderProductsTable);
 </script>
 </body>
 </html>
