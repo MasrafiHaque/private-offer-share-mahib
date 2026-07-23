@@ -93,7 +93,6 @@ button { font-family: inherit; cursor: pointer; }
 .logo {
   display: flex;
   align-items: center;
-  gap: 0.40rem;
   flex-shrink: 0;
 }
 .logo-img { width: 70px; height: 70px; object-fit: contain; flex-shrink: 0; }
