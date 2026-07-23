@@ -1,5 +1,5 @@
 /* ============================================
-   Authentication (Email + Phone as Email)
+   Authentication (Email + Phone)
    ============================================ */
 
 let currentUser = null;
@@ -71,74 +71,91 @@ function updateAuthUI() {
   }
 }
 
-function openAuthModal(mode = "login") {
+// ✅✅✅ FIXED: openAuthModal function ✅✅✅
+function openAuthModal(mode) {
+  mode = mode || "login";
   var modal = document.getElementById("authModalOverlay");
-  if (modal) {
-    modal.classList.add("active");
-    setAuthTab(mode);
-  } else {
-    console.error("authModalOverlay NOT FOUND!");
+  if (!modal) {
+    console.error("❌ authModalOverlay element NOT found in HTML!");
+    showToast("Login system error. Please refresh page.", "error");
+    return;
   }
+  modal.classList.add("active");
+  setAuthTab(mode);
 }
 
+// ✅✅✅ FIXED: closeAuthModal function ✅✅✅
 function closeAuthModal() {
   var modal = document.getElementById("authModalOverlay");
   if (modal) {
     modal.classList.remove("active");
-    document.getElementById("authError").textContent = "";
+    var errorEl = document.getElementById("authError");
+    if (errorEl) errorEl.textContent = "";
   }
 }
 
 function setAuthTab(mode) {
-  document.querySelectorAll(".auth-tab").forEach((t) => t.classList.toggle("active", t.dataset.mode === mode));
-  document.getElementById("authForm").dataset.mode = mode;
-  document.getElementById("authSubmitBtn").textContent = mode === "login" ? "লগইন করুন" : "Sign Up করুন";
-  document.getElementById("nameField").style.display = mode === "signup" ? "block" : "none";
+  document.querySelectorAll(".auth-tab").forEach(function(t) {
+    t.classList.toggle("active", t.dataset.mode === mode);
+  });
+  var form = document.getElementById("authForm");
+  if (form) form.dataset.mode = mode;
+  var submitBtn = document.getElementById("authSubmitBtn");
+  if (submitBtn) submitBtn.textContent = mode === "login" ? "লগইন করুন" : "Sign Up করুন";
+  var nameField = document.getElementById("nameField");
+  if (nameField) nameField.style.display = mode === "signup" ? "block" : "none";
 }
 
 function setAuthMethod(method) {
-  document.querySelectorAll(".auth-method-switch button").forEach((b) => b.classList.toggle("active", b.dataset.method === method));
-  document.getElementById("authForm").dataset.method = method;
+  document.querySelectorAll(".auth-method-switch button").forEach(function(b) {
+    b.classList.toggle("active", b.dataset.method === method);
+  });
+  var form = document.getElementById("authForm");
+  if (form) form.dataset.method = method;
   
   if (method === "email") {
-    document.querySelector("#emailField label").textContent = "Email";
-    document.getElementById("emailInput").placeholder = "you@example.com";
-    document.getElementById("emailInput").type = "email";
+    var label = document.querySelector("#emailField label");
+    if (label) label.textContent = "Email";
+    var input = document.getElementById("emailInput");
+    if (input) { input.placeholder = "you@example.com"; input.type = "email"; }
   } else if (method === "phone") {
-    document.querySelector("#emailField label").textContent = "ফোন নম্বর";
-    document.getElementById("emailInput").placeholder = "+8801XXXXXXXXX";
-    document.getElementById("emailInput").type = "tel";
+    var label = document.querySelector("#emailField label");
+    if (label) label.textContent = "ফোন নম্বর";
+    var input = document.getElementById("emailInput");
+    if (input) { input.placeholder = "+8801XXXXXXXXX"; input.type = "tel"; }
   }
 }
 
 /* ---------- Form submit ---------- */
-document.addEventListener("DOMContentLoaded", () => {
-  const codForm = document.getElementById("codOrderForm");
+document.addEventListener("DOMContentLoaded", function() {
+  // COD Form
+  var codForm = document.getElementById("codOrderForm");
   if (codForm) {
-    const newForm = codForm.cloneNode(true);
+    var newForm = codForm.cloneNode(true);
     codForm.parentNode.replaceChild(newForm, codForm);
     newForm.addEventListener("submit", submitCODOrder);
   }
 
-  const form = document.getElementById("authForm");
+  // Auth form
+  var form = document.getElementById("authForm");
   if (!form) return;
 
-  form.addEventListener("submit", async (e) => {
+  form.addEventListener("submit", async function(e) {
     e.preventDefault();
-    const mode = form.dataset.mode;
-    const method = form.dataset.method;
-    const errorEl = document.getElementById("authError");
+    var mode = form.dataset.mode;
+    var method = form.dataset.method;
+    var errorEl = document.getElementById("authError");
     errorEl.textContent = "";
 
     try {
-      let email, password, name;
+      var email, password, name;
       
       if (method === "email") {
         email = document.getElementById("emailInput").value.trim();
         password = document.getElementById("passwordInput").value;
         if (mode === "signup") name = document.getElementById("nameInput").value.trim();
       } else if (method === "phone") {
-        let phone = document.getElementById("emailInput").value.trim();
+        var phone = document.getElementById("emailInput").value.trim();
         password = document.getElementById("passwordInput").value;
         if (!phone.startsWith("+")) { errorEl.textContent = "ফোন নম্বর Country Code সহ লিখুন (যেমন: +8801XXXXXXXXX)"; return; }
         phone = phone.replace(/[\s\-\(\)]/g, "");
@@ -151,7 +168,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (password.length < 6) { errorEl.textContent = "Password কমপক্ষে ৬ অক্ষরের হতে হবে"; return; }
 
       if (mode === "signup") {
-        const cred = await auth.createUserWithEmailAndPassword(email, password);
+        var cred = await auth.createUserWithEmailAndPassword(email, password);
         await cred.user.updateProfile({ displayName: name || email.split('@')[0] });
         await db.collection("users").doc(cred.user.uid).set({
           name: name || email.split('@')[0],
@@ -173,7 +190,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function friendlyAuthError(code) {
-  const map = {
+  var map = {
     "auth/email-already-in-use": "এই ফোন নম্বর/ইমেইল দিয়ে আগে থেকেই অ্যাকাউন্ট আছে।",
     "auth/invalid-email": "সঠিক ফোন নম্বর/ইমেইল দিন।",
     "auth/weak-password": "Password কমপক্ষে ৬ অক্ষরের হতে হবে।",
@@ -195,7 +212,7 @@ function requireAuthThenRedirect(affiliateLink, productId, source) {
 }
 
 function requireAuthForCOD(productId, productName, productPrice, source) {
-  const productData = { id: productId, name: productName, price: productPrice, source: source };
+  var productData = { id: productId, name: productName, price: productPrice, source: source };
   if (currentUser) { openCODModal(productData); }
   else { pendingCODSource = { product: productData }; openAuthModal("login"); showToast("অর্ডার করতে হলে আগে Login করুন", "error"); }
 }
@@ -207,13 +224,13 @@ function openCODModal(product) {
   document.getElementById("codOrderForm").reset();
   document.getElementById("codModalOverlay").classList.add("active");
   if (currentUser) {
-    db.collection("users").doc(currentUser.uid).get().then((doc) => {
+    db.collection("users").doc(currentUser.uid).get().then(function(doc) {
       if (doc.exists) {
-        const data = doc.data();
+        var data = doc.data();
         if (data.name) document.getElementById("codName").value = data.name;
         if (data.phone) document.getElementById("codPhone").value = data.phone;
       }
-    }).catch(() => {});
+    }).catch(function() {});
   }
 }
 
@@ -225,16 +242,16 @@ function closeCodModal() {
 function submitCODOrder(e) {
   e.preventDefault();
   if (!currentCODProduct) { showToast("প্রোডাক্ট তথ্য পাওয়া যায়নি", "error"); return; }
-  const customerName = document.getElementById("codName").value.trim();
-  const customerPhone = document.getElementById("codPhone").value.trim();
-  const customerAddress = document.getElementById("codAddress").value.trim();
-  const quantity = parseInt(document.getElementById("codQuantity").value) || 1;
+  var customerName = document.getElementById("codName").value.trim();
+  var customerPhone = document.getElementById("codPhone").value.trim();
+  var customerAddress = document.getElementById("codAddress").value.trim();
+  var quantity = parseInt(document.getElementById("codQuantity").value) || 1;
   if (!customerName || !customerPhone || !customerAddress) { showToast("সব তথ্য পূরণ করুন", "error"); return; }
   
-  const orderData = {
+  var orderData = {
     productId: currentCODProduct.id, source: currentCODProduct.source || "own",
     productName: currentCODProduct.name, productPrice: formatPrice(currentCODProduct.price),
-    customerName, customerPhone, customerAddress, quantity,
+    customerName: customerName, customerPhone: customerPhone, customerAddress: customerAddress, quantity: quantity,
     userId: currentUser ? currentUser.uid : null,
     userEmail: currentUser ? currentUser.email : null,
     status: "pending",
@@ -242,19 +259,19 @@ function submitCODOrder(e) {
   };
   
   db.collection("codOrders").add(orderData)
-    .then(() => {
+    .then(function() {
       if (typeof trackCODOrder === 'function') { try { trackCODOrder(currentCODProduct.id); } catch(e) {} }
       showToast("✅ আপনার অর্ডার সফলভাবে নেওয়া হয়েছে! শীঘ্রই যোগাযোগ করা হবে।");
       closeCodModal();
     })
-    .catch((err) => { showToast("অর্ডার নিতে সমস্যা হয়েছে", "error"); });
+    .catch(function(err) { showToast("অর্ডার নিতে সমস্যা হয়েছে", "error"); });
 }
 
 function antiTamperCheck() {
-  if (window.location.href.includes('sys-mgr') || window.location.href.includes('admin')) {
-    document.addEventListener('contextmenu', (e) => e.preventDefault());
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && ['I','J','C'].includes(e.key)) || (e.ctrlKey && e.key === 'U')) {
+  if (window.location.href.indexOf('sys-mgr') > -1 || window.location.href.indexOf('admin') > -1) {
+    document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && ['I','J','C'].indexOf(e.key) > -1) || (e.ctrlKey && e.key === 'U')) {
         e.preventDefault();
       }
     });
