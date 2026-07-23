@@ -199,16 +199,24 @@ function submitCODOrder(e) {
   db.collection("codOrders").add(orderData)
     .then((docRef) => {
       console.log("COD Order saved with ID:", docRef.id);
-      trackCODOrder(currentCODProduct.id);
+      
+      // ✅ FIX: trackCODOrder কে safely call করা
+      if (typeof trackCODOrder === 'function') {
+        try {
+          trackCODOrder(currentCODProduct.id);
+        } catch (e) {
+          console.warn("Analytics tracking skipped:", e.message);
+        }
+      }
+      
       showToast("✅ আপনার অর্ডার সফলভাবে নেওয়া হয়েছে! শীঘ্রই যোগাযোগ করা হবে।");
       closeCodModal();
     })
     .catch((err) => {
       console.error("COD Order Error:", err);
-      showToast("অর্ডার নিতে সমস্যা হয়েছে, আবার চেষ্টা করুন।", "error");
+      showToast("অর্ডার নিতে সমস্যা হয়েছে: " + (err.message || "আবার চেষ্টা করুন"), "error");
     });
 }
-
 /* ---------- Auth Form Submit ---------- */
 document.addEventListener("DOMContentLoaded", () => {
   // COD Form - IMPORTANT: Remove old listener first, then add new one
