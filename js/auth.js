@@ -29,8 +29,8 @@ auth.onAuthStateChanged(async (user) => {
     } else {
       await ref.update({ lastLogin: firebase.firestore.FieldValue.serverTimestamp() });
       if (snap.data().status === "banned") {
-        showToast("আপনার অ্যাকাউন্ট সাসপেন্ড করা হয়েছে।", "error");
-        auth.signOut();
+        showToast("⛔ আপনার অ্যাকাউন্ট সাসপেন্ড করা হয়েছে।", "error");
+        await auth.signOut();
         return;
       }
     }
@@ -49,7 +49,46 @@ auth.onAuthStateChanged(async (user) => {
       closeAuthModal();
     }
   }
+  
+  // ✅ Anti-tamper check
+  antiTamperCheck();
 });
+
+// ✅ Anti-tamper protection
+function antiTamperCheck() {
+  // Detect DevTools
+  const threshold = 160;
+  setInterval(() => {
+    const widthThreshold = window.outerWidth - window.innerWidth > threshold;
+    const heightThreshold = window.outerHeight - window.innerHeight > threshold;
+    if (widthThreshold || heightThreshold) {
+      // Console warning only, doesn't block
+      console.clear();
+      console.log("%cStop!", "color:red;font-size:50px;");
+      console.log("%cThis is a restricted area.", "font-size:20px;");
+    }
+  }, 1000);
+  
+  // Disable right-click on admin panel
+  if (window.location.href.includes('admin') || window.location.href.includes('secure-panel')) {
+    document.addEventListener('contextmenu', function(e) {
+      e.preventDefault();
+      return false;
+    });
+    
+    // Disable F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U
+    document.addEventListener('keydown', function(e) {
+      if (
+        e.key === 'F12' ||
+        (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) ||
+        (e.ctrlKey && e.key === 'U')
+      ) {
+        e.preventDefault();
+        return false;
+      }
+    });
+  }
+}
 
 function updateAuthUI() {
   const loginBtn = document.getElementById("loginBtnHeader");
