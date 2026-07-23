@@ -24,11 +24,9 @@
   .status-delivered { background: rgba(16,185,129,.18); color: #10B981; }
   .status-cancelled { background: rgba(239,68,68,.18); color: #EF4444; }
   .empty-state { text-align: center; padding: 3rem 1rem; color: var(--text-muted); }
-  .logout-btn { margin-top: 1rem; }
+  .logout-section { margin-top: 2rem; text-align: center; padding-top: 1.5rem; border-top: 1px solid var(--border); }
   .back-link { display: inline-block; margin: 1rem 0; color: var(--accent); font-weight: 600; }
-  @media (max-width: 480px) {
-    .profile-header { flex-direction: column; text-align: center; }
-  }
+  @media (max-width: 480px) { .profile-header { flex-direction: column; text-align: center; } }
 </style>
 </head>
 <body>
@@ -49,15 +47,15 @@
 </header>
 
 <main class="profile-container" id="profileContent">
-  <div class="skeleton" style="height:100px;margin-bottom:1rem;"></div>
-  <div class="skeleton" style="height:80px;margin-bottom:0.5rem;"></div>
-  <div class="skeleton" style="height:80px;margin-bottom:0.5rem;"></div>
+  <div class="skeleton" style="height:100px;margin-bottom:1rem;border-radius:var(--radius);"></div>
+  <div class="skeleton" style="height:80px;margin-bottom:0.5rem;border-radius:var(--radius);"></div>
+  <div class="skeleton" style="height:80px;margin-bottom:0.5rem;border-radius:var(--radius);"></div>
 </main>
 
 <footer class="site-footer">
   <div class="footer-inner">
     <div>© <span id="year"></span> Private Offer Share</div>
-    <div><a href="privacy.html">প্রাইভেসি</a> | <a href="terms.html">টার্মস</a> | <a href="contact.html">কন্টাক্ট</a></div>
+    <div><a href="privacy.html">Privacy</a> | <a href="terms.html">Terms</a> | <a href="contact.html">Contact</a></div>
   </div>
 </footer>
 
@@ -67,27 +65,28 @@
 <script src="js/firebase-config.js"></script>
 <script src="js/utils.js"></script>
 <script>
+  // Theme
   document.getElementById('year').textContent = new Date().getFullYear();
-  const saved = localStorage.getItem("dn_theme") || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  var saved = localStorage.getItem("dn_theme") || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
   document.documentElement.setAttribute("data-theme", saved);
   document.getElementById('themeToggleBtn').textContent = saved === "dark" ? "☀️" : "🌙";
   document.getElementById('themeToggleBtn').addEventListener('click', function() {
-    const cur = document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light";
-    const next = cur === "dark" ? "light" : "dark";
+    var cur = document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light";
+    var next = cur === "dark" ? "light" : "dark";
     document.documentElement.setAttribute("data-theme", next);
     localStorage.setItem("dn_theme", next);
     this.textContent = next === "dark" ? "☀️" : "🌙";
   });
 
   // Auth check
-  auth.onAuthStateChanged(async (user) => {
+  auth.onAuthStateChanged(async function(user) {
     if (!user) {
       document.getElementById('profileContent').innerHTML = `
         <div class="empty-state">
           <i class="fas fa-user-lock" style="font-size:4rem;display:block;margin-bottom:1rem;color:var(--text-muted);"></i>
           <h2>আগে Login করুন</h2>
-          <p style="color:var(--text-muted);">প্রোফাইল দেখতে হলে অবশ্যই Login করতে হবে।</p>
-          <a href="index.html" class="btn btn-primary" style="margin-top:1rem;">হোমে ফিরুন</a>
+          <p style="color:var(--text-muted);margin-bottom:1.5rem;">প্রোফাইল দেখতে হলে অবশ্যই Login করতে হবে।</p>
+          <a href="index.html" class="btn btn-primary">🏠 হোমে ফিরুন</a>
         </div>`;
       return;
     }
@@ -96,74 +95,74 @@
 
   async function loadProfile(user) {
     try {
-      const userDoc = await db.collection("users").doc(user.uid).get();
-      const userData = userDoc.exists ? userDoc.data() : {};
+      var userDoc = await db.collection("users").doc(user.uid).get();
+      var userData = userDoc.exists ? userDoc.data() : {};
       
-      // Fetch orders
-      const ordersSnap = await db.collection("codOrders")
+      var ordersSnap = await db.collection("codOrders")
         .where("userId", "==", user.uid)
         .orderBy("createdAt", "desc")
         .limit(20)
         .get();
       
-      const orders = ordersSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-      
+      var orders = ordersSnap.docs.map(function(d) { return { id: d.id, ...d.data() }; });
       renderProfile(user, userData, orders);
     } catch (e) {
       console.error(e);
+      document.getElementById('profileContent').innerHTML = '<div class="empty-state">ডাটা লোড করতে সমস্যা হয়েছে।</div>';
     }
   }
 
+  function escapeHTML(str) {
+    var div = document.createElement("div");
+    div.textContent = str || "";
+    return div.innerHTML;
+  }
+
   function renderProfile(user, userData, orders) {
-    const name = userData.name || user.displayName || user.email?.split('@')[0] || 'User';
-    const email = userData.email || user.email || 'N/A';
-    const phone = userData.phone || 'N/A';
-    const loginMethod = userData.loginMethod === 'phone' ? 'ফোন নম্বর' : 'ইমেইল';
+    var name = userData.name || user.displayName || (user.email ? user.email.split('@')[0] : 'User');
+    var email = userData.email || user.email || 'N/A';
+    var phone = userData.phone || 'N/A';
+    var loginMethod = userData.loginMethod === 'phone' ? 'ফোন নম্বর' : 'ইমেইল';
+    var joinedDate = userData.createdAt && userData.createdAt.toDate ? userData.createdAt.toDate().toLocaleDateString("bn-BD") : 'N/A';
     
-    let ordersHTML = '';
+    var ordersHTML = '';
     if (orders.length === 0) {
-      ordersHTML = `<div class="empty-state"><i class="fas fa-box-open" style="font-size:2rem;display:block;margin-bottom:0.5rem;"></i>এখনো কোনো অর্ডার নেই</div>`;
+      ordersHTML = '<div class="empty-state"><i class="fas fa-box-open" style="font-size:2.5rem;display:block;margin-bottom:0.5rem;"></i>এখনো কোনো অর্ডার নেই</div>';
     } else {
-      ordersHTML = orders.map(o => {
-        const date = o.createdAt?.toDate ? o.createdAt.toDate().toLocaleDateString("bn-BD") : "—";
-        const statusClass = {
-          pending: 'status-pending', confirmed: 'status-confirmed',
-          delivered: 'status-delivered', cancelled: 'status-cancelled'
-        }[o.status] || '';
-        const statusLabel = { pending: 'Pending', confirmed: 'Confirmed', delivered: 'Delivered', cancelled: 'Cancelled' }[o.status] || o.status;
-        return `
-          <div class="order-card">
-            <div class="order-header">
-              <strong>${escapeHTML(o.productName || '—')}</strong>
-              <span class="order-status ${statusClass}">${statusLabel}</span>
-            </div>
-            <div class="order-detail">
-              দাম: ${o.productPrice || '—'} | পরিমাণ: ${o.quantity || 1} | তারিখ: ${date}
-            </div>
-          </div>`;
+      ordersHTML = orders.map(function(o) {
+        var date = o.createdAt && o.createdAt.toDate ? o.createdAt.toDate().toLocaleDateString("bn-BD") : "—";
+        var statusClass = { pending: 'status-pending', confirmed: 'status-confirmed', delivered: 'status-delivered', cancelled: 'status-cancelled' }[o.status] || '';
+        var statusLabel = { pending: '⏳ Pending', confirmed: '✅ Confirmed', delivered: '📦 Delivered', cancelled: '❌ Cancelled' }[o.status] || o.status;
+        return '<div class="order-card">' +
+          '<div class="order-header"><strong>' + escapeHTML(o.productName || '—') + '</strong><span class="order-status ' + statusClass + '">' + statusLabel + '</span></div>' +
+          '<div class="order-detail">দাম: ' + (o.productPrice || '—') + ' | পরিমাণ: ' + (o.quantity || 1) + ' | তারিখ: ' + date + '</div>' +
+        '</div>';
       }).join('');
     }
 
     document.getElementById('profileContent').innerHTML = `
-      <a href="index.html" class="back-link">← হোমে ফিরুন</a>
+      <a href="index.html" class="back-link"><i class="fas fa-arrow-left"></i> হোমে ফিরুন</a>
+      
       <div class="profile-header">
         <div class="profile-avatar"><i class="fas fa-user"></i></div>
         <div class="profile-info">
           <h2>${escapeHTML(name)}</h2>
-          <p>${escapeHTML(email)} | ${escapeHTML(phone)}</p>
-          <p style="font-size:0.78rem;">Login Method: ${loginMethod}</p>
+          <p><i class="fas fa-envelope"></i> ${escapeHTML(email)}</p>
+          <p><i class="fas fa-phone"></i> ${escapeHTML(phone)}</p>
+          <p style="font-size:0.78rem;margin-top:0.3rem;">Login: ${loginMethod} | Joined: ${joinedDate}</p>
         </div>
       </div>
-      <h2 style="font-family:var(--font-display);margin-bottom:1rem;">📦 আপনার অর্ডার সমূহ</h2>
+      
+      <h2 style="font-family:var(--font-display);margin-bottom:1rem;">📦 আপনার অর্ডার সমূহ (${orders.length})</h2>
       ${ordersHTML}
-      <button class="btn btn-danger logout-btn" onclick="auth.signOut(); window.location.href='index.html';">🚪 লগআউট</button>
+      
+      <div class="logout-section">
+        <p style="color:var(--text-muted);margin-bottom:0.8rem;font-size:0.88rem;">আপনি লগইন করা আছেন</p>
+        <button class="btn btn-danger" onclick="auth.signOut(); window.location.href='index.html';" style="padding:0.7rem 2rem;">
+          <i class="fas fa-sign-out-alt"></i> লগআউট
+        </button>
+      </div>
     `;
-  }
-
-  function escapeHTML(str) {
-    const div = document.createElement("div");
-    div.textContent = str ?? "";
-    return div.innerHTML;
   }
 </script>
 </body>
