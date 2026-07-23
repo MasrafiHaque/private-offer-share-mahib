@@ -1,6 +1,5 @@
 /* ============================================
    Authentication (Email + Phone as Email)
-   (Updated: Phone Login without OTP)
    ============================================ */
 
 let currentUser = null;
@@ -16,12 +15,10 @@ auth.onAuthStateChanged(async (user) => {
     const ref = db.collection("users").doc(user.uid);
     const snap = await ref.get();
     if (!snap.exists) {
-      // ইউজারের ডিসপ্লে নেম থেকে ফোন নম্বর বের করা
       let phoneNumber = null;
       if (user.email && user.email.includes('@phone.')) {
         phoneNumber = user.email.split('@')[0];
       }
-      
       await ref.set({
         name: user.displayName || phoneNumber || "User",
         email: user.email || null,
@@ -67,18 +64,13 @@ function updateAuthUI() {
   if (currentUser) {
     loginBtn.style.display = "none";
     userBtn.style.display = "flex";
-    const displayName = currentUser.displayName || 
-                        currentUser.email?.split('@')[0] || 
-                        currentUser.phoneNumber || 
-                        "";
-    userBtn.title = displayName;
+    userBtn.title = currentUser.displayName || currentUser.email?.split('@')[0] || "";
   } else {
     loginBtn.style.display = "flex";
     userBtn.style.display = "none";
   }
 }
 
-/* ---------- Modal open/close ---------- */
 function openAuthModal(mode = "login") {
   document.getElementById("authModalOverlay").classList.add("active");
   setAuthTab(mode);
@@ -101,18 +93,10 @@ function setAuthMethod(method) {
   document.getElementById("authForm").dataset.method = method;
   
   if (method === "email") {
-    document.getElementById("emailField").style.display = "block";
-    document.getElementById("passwordField").style.display = "block";
-    document.getElementById("phoneField").style.display = "none";
-    document.getElementById("otpField").style.display = "none";
     document.querySelector("#emailField label").textContent = "Email";
     document.getElementById("emailInput").placeholder = "you@example.com";
     document.getElementById("emailInput").type = "email";
   } else if (method === "phone") {
-    document.getElementById("emailField").style.display = "block";
-    document.getElementById("passwordField").style.display = "block";
-    document.getElementById("phoneField").style.display = "none";
-    document.getElementById("otpField").style.display = "none";
     document.querySelector("#emailField label").textContent = "ফোন নম্বর";
     document.getElementById("emailInput").placeholder = "+8801XXXXXXXXX";
     document.getElementById("emailInput").type = "tel";
@@ -121,7 +105,6 @@ function setAuthMethod(method) {
 
 /* ---------- Form submit ---------- */
 document.addEventListener("DOMContentLoaded", () => {
-  // COD Form
   const codForm = document.getElementById("codOrderForm");
   if (codForm) {
     const newForm = codForm.cloneNode(true);
@@ -129,14 +112,13 @@ document.addEventListener("DOMContentLoaded", () => {
     newForm.addEventListener("submit", submitCODOrder);
   }
 
-  // Auth form
   const form = document.getElementById("authForm");
   if (!form) return;
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
-    const mode = form.dataset.mode; // login or signup
-    const method = form.dataset.method; // email or phone
+    const mode = form.dataset.mode;
+    const method = form.dataset.method;
     const errorEl = document.getElementById("authError");
     errorEl.textContent = "";
 
@@ -144,75 +126,35 @@ document.addEventListener("DOMContentLoaded", () => {
       let email, password, name;
       
       if (method === "email") {
-        // Normal email login
         email = document.getElementById("emailInput").value.trim();
         password = document.getElementById("passwordInput").value;
-        
-        if (mode === "signup") {
-          name = document.getElementById("nameInput").value.trim();
-        }
+        if (mode === "signup") name = document.getElementById("nameInput").value.trim();
       } else if (method === "phone") {
-        // Phone as email login
         let phone = document.getElementById("emailInput").value.trim();
         password = document.getElementById("passwordInput").value;
-        
-        // Validate phone format
-        if (!phone.startsWith("+")) {
-          errorEl.textContent = "ফোন নম্বর Country Code সহ লিখুন (যেমন: +8801XXXXXXXXX)";
-          return;
-        }
-        
-        // Clean phone number
+        if (!phone.startsWith("+")) { errorEl.textContent = "ফোন নম্বর Country Code সহ লিখুন (যেমন: +8801XXXXXXXXX)"; return; }
         phone = phone.replace(/[\s\-\(\)]/g, "");
-        
-        // Phone validation (Bangladesh: +8801XXXXXXXXX = 14 chars)
-        if (phone.length < 11 || phone.length > 15) {
-          errorEl.textContent = "সঠিক ফোন নম্বর লিখুন";
-          return;
-        }
-        
-        // Convert phone to email format
+        if (phone.length < 11 || phone.length > 15) { errorEl.textContent = "সঠিক ফোন নম্বর লিখুন"; return; }
         email = phone + "@phone.privateoffershare.com";
-        
-        if (mode === "signup") {
-          name = document.getElementById("nameInput").value.trim() || phone;
-        }
+        if (mode === "signup") name = document.getElementById("nameInput").value.trim() || phone;
       }
       
-      if (!email || !password) {
-        errorEl.textContent = "সব তথ্য পূরণ করুন";
-        return;
-      }
-      
-      if (password.length < 6) {
-        errorEl.textContent = "Password কমপক্ষে ৬ অক্ষরের হতে হবে";
-        return;
-      }
+      if (!email || !password) { errorEl.textContent = "সব তথ্য পূরণ করুন"; return; }
+      if (password.length < 6) { errorEl.textContent = "Password কমপক্ষে ৬ অক্ষরের হতে হবে"; return; }
 
       if (mode === "signup") {
-        // Registration
         const cred = await auth.createUserWithEmailAndPassword(email, password);
-        
-        // Update display name
-        await cred.user.updateProfile({
-          displayName: name || email.split('@')[0]
-        });
-        
-        // Save user data to Firestore
+        await cred.user.updateProfile({ displayName: name || email.split('@')[0] });
         await db.collection("users").doc(cred.user.uid).set({
           name: name || email.split('@')[0],
           email: method === "phone" ? null : email,
           phone: method === "phone" ? email.split('@')[0] : null,
-          role: "user",
-          status: "active",
-          loginMethod: method,
+          role: "user", status: "active", loginMethod: method,
           createdAt: firebase.firestore.FieldValue.serverTimestamp(),
           lastLogin: firebase.firestore.FieldValue.serverTimestamp()
         });
-        
         showToast("✅ অ্যাকাউন্ট তৈরি হয়েছে!");
       } else {
-        // Login
         await auth.signInWithEmailAndPassword(email, password);
         showToast("✅ সফলভাবে লগইন হয়েছে!");
       }
@@ -229,7 +171,6 @@ function friendlyAuthError(code) {
     "auth/weak-password": "Password কমপক্ষে ৬ অক্ষরের হতে হবে।",
     "auth/wrong-password": "Password সঠিক নয়।",
     "auth/user-not-found": "এই ফোন নম্বর/ইমেইল দিয়ে কোনো অ্যাকাউন্ট নেই।",
-    "auth/invalid-phone-number": "ফোন নম্বর সঠিক নয়।",
     "auth/too-many-requests": "অনেকবার চেষ্টা করা হয়েছে, একটু পর আবার চেষ্টা করুন।"
   };
   return map[code] || "কিছু একটা ভুল হয়েছে, আবার চেষ্টা করুন।";
@@ -240,56 +181,29 @@ function logout() {
   showToast("✅ লগআউট হয়েছে");
 }
 
-/* ---------- Buy Now gate ---------- */
 function requireAuthThenRedirect(affiliateLink, productId, source) {
-  if (currentUser) {
-    trackBuyClick(productId, source);
-    window.open(affiliateLink, "_blank");
-  } else {
-    pendingBuyProduct = affiliateLink;
-    openAuthModal("login");
-    showToast("কিনতে হলে আগে Login করুন", "error");
-  }
+  if (currentUser) { trackBuyClick(productId, source); window.open(affiliateLink, "_blank"); }
+  else { pendingBuyProduct = affiliateLink; openAuthModal("login"); showToast("কিনতে হলে আগে Login করুন", "error"); }
 }
 
-/* ---------- COD Order gate ---------- */
 function requireAuthForCOD(productId, productName, productPrice, source) {
   const productData = { id: productId, name: productName, price: productPrice, source: source };
-  
-  if (currentUser) {
-    openCODModal(productData);
-  } else {
-    pendingCODSource = { product: productData };
-    openAuthModal("login");
-    showToast("অর্ডার করতে হলে আগে Login করুন", "error");
-  }
+  if (currentUser) { openCODModal(productData); }
+  else { pendingCODSource = { product: productData }; openAuthModal("login"); showToast("অর্ডার করতে হলে আগে Login করুন", "error"); }
 }
 
-/* ---------- COD Modal ---------- */
 function openCODModal(product) {
   currentCODProduct = product;
-  
   document.getElementById("codProductName").textContent = product.name;
   document.getElementById("codProductPrice").textContent = formatPrice(product.price);
-  
   document.getElementById("codOrderForm").reset();
-  document.getElementById("codName").value = "";
-  document.getElementById("codPhone").value = "";
-  document.getElementById("codAddress").value = "";
-  document.getElementById("codQuantity").value = "1";
-  
   document.getElementById("codModalOverlay").classList.add("active");
-  
   if (currentUser) {
     db.collection("users").doc(currentUser.uid).get().then((doc) => {
       if (doc.exists) {
         const data = doc.data();
-        if (data.name && !document.getElementById("codName").value) {
-          document.getElementById("codName").value = data.name;
-        }
-        if (data.phone && !document.getElementById("codPhone").value) {
-          document.getElementById("codPhone").value = data.phone;
-        }
+        if (data.name) document.getElementById("codName").value = data.name;
+        if (data.phone) document.getElementById("codPhone").value = data.phone;
       }
     }).catch(() => {});
   }
@@ -300,33 +214,19 @@ function closeCodModal() {
   currentCODProduct = null;
 }
 
-/* ---------- COD Order Form Submit ---------- */
 function submitCODOrder(e) {
   e.preventDefault();
-  
-  if (!currentCODProduct) {
-    showToast("প্রোডাক্ট তথ্য পাওয়া যায়নি", "error");
-    return;
-  }
-  
+  if (!currentCODProduct) { showToast("প্রোডাক্ট তথ্য পাওয়া যায়নি", "error"); return; }
   const customerName = document.getElementById("codName").value.trim();
   const customerPhone = document.getElementById("codPhone").value.trim();
   const customerAddress = document.getElementById("codAddress").value.trim();
   const quantity = parseInt(document.getElementById("codQuantity").value) || 1;
-  
-  if (!customerName) { showToast("নাম লিখুন", "error"); return; }
-  if (!customerPhone) { showToast("ফোন নম্বর লিখুন", "error"); return; }
-  if (!customerAddress) { showToast("ঠিকানা লিখুন", "error"); return; }
+  if (!customerName || !customerPhone || !customerAddress) { showToast("সব তথ্য পূরণ করুন", "error"); return; }
   
   const orderData = {
-    productId: currentCODProduct.id,
-    source: currentCODProduct.source || "own",
-    productName: currentCODProduct.name,
-    productPrice: formatPrice(currentCODProduct.price),
-    customerName,
-    customerPhone,
-    customerAddress,
-    quantity,
+    productId: currentCODProduct.id, source: currentCODProduct.source || "own",
+    productName: currentCODProduct.name, productPrice: formatPrice(currentCODProduct.price),
+    customerName, customerPhone, customerAddress, quantity,
     userId: currentUser ? currentUser.uid : null,
     userEmail: currentUser ? currentUser.email : null,
     status: "pending",
@@ -334,19 +234,14 @@ function submitCODOrder(e) {
   };
   
   db.collection("codOrders").add(orderData)
-    .then((docRef) => {
-      if (typeof trackCODOrder === 'function') {
-        try { trackCODOrder(currentCODProduct.id); } catch(e) {}
-      }
-      showToast("✅ অর্ডার সফলভাবে নেওয়া হয়েছে! শীঘ্রই যোগাযোগ করা হবে।");
+    .then(() => {
+      if (typeof trackCODOrder === 'function') { try { trackCODOrder(currentCODProduct.id); } catch(e) {} }
+      showToast("✅ আপনার অর্ডার সফলভাবে নেওয়া হয়েছে! শীঘ্রই যোগাযোগ করা হবে।");
       closeCodModal();
     })
-    .catch((err) => {
-      showToast("অর্ডার নিতে সমস্যা হয়েছে", "error");
-    });
+    .catch((err) => { showToast("অর্ডার নিতে সমস্যা হয়েছে", "error"); });
 }
 
-/* ---------- Anti-tamper ---------- */
 function antiTamperCheck() {
   if (window.location.href.includes('sys-mgr') || window.location.href.includes('admin')) {
     document.addEventListener('contextmenu', (e) => e.preventDefault());

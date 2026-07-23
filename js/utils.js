@@ -1,6 +1,5 @@
 /* ============================================
    Shared Utility Functions
-   (Updated: Fixed Theme Toggle)
    ============================================ */
 
 function showToast(message, type = "success") {
@@ -46,7 +45,6 @@ function toggleTheme() {
   document.documentElement.setAttribute("data-theme", next);
   localStorage.setItem("dn_theme", next);
   updateThemeIcon(next);
-  console.log("Theme toggled to:", next); // Debug log
 }
 
 function updateThemeIcon(theme) {
@@ -68,24 +66,9 @@ function debounce(fn, delay = 400) {
 
 /* ---------- Source Labels & Colors ---------- */
 const SOURCE_CONFIG = {
-  daraz: {
-    label: "Daraz",
-    color: "#F57224",
-    icon: "fa-bolt",
-    badgeClass: "daraz"
-  },
-  external: {
-    label: "অন্যান্য প্রতিষ্ঠান",
-    color: "#3B82F6",
-    icon: "fa-store",
-    badgeClass: "external"
-  },
-  own: {
-    label: "আমাদের প্রোডাক্ট",
-    color: "#10B981",
-    icon: "fa-star",
-    badgeClass: "own"
-  }
+  daraz: { label: "Daraz", color: "#F57224", icon: "fa-bolt", badgeClass: "daraz" },
+  external: { label: "অন্যান্য প্রতিষ্ঠান", color: "#3B82F6", icon: "fa-store", badgeClass: "external" },
+  own: { label: "আমাদের প্রোডাক্ট", color: "#10B981", icon: "fa-star", badgeClass: "own" }
 };
 
 function getSourceLabel(source) {
@@ -100,7 +83,6 @@ function getSourceBadgeClass(source) {
   return SOURCE_CONFIG[source]?.badgeClass || "";
 }
 
-/* ---------- Active Sources (LocalStorage Cache) ---------- */
 function getActiveSources() {
   try {
     const cached = localStorage.getItem("dn_active_sources");

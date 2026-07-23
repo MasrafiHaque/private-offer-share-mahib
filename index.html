@@ -4,11 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Private Offer Share — সেরা ডিল, সেরা দামে</title>
-<meta name="description" content="Private Offer Share — Daraz ও আরও অনেক প্রতিষ্ঠানের সেরা প্রোডাক্ট, সেরা দামে।">
-<meta name="robots" content="index, follow">
+<meta name="description" content="Private Offer Share — দেশের সেরা অনলাইন শপগুলোর বাছাই করা প্রোডাক্ট ও এক্সক্লুসিভ ডিল — সব এখন এক জায়গায়।">
 <meta name="generator" content="Private Offer Share">
-<meta name="author" content="Private Offer Share">
-<!-- No framework detected -->
+<meta name="robots" content="index, follow">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700;800&family=Poppins:wght@700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -18,40 +16,48 @@
 <body>
 
 <!-- ============ HEADER ============ -->
-<!-- ============ HEADER ============ -->
 <header class="site-header">
   <div class="header-inner">
-    <!-- Logo -->
-    <a href="#" class="logo">
-      <img src="assets/images/logo.png" alt="Private Offer Share" class="logo-img">
-      <span class="logo-text">Private Offer <em>Share</em></span>
-    </a>
-    
-    <!-- Action Buttons (Theme + Filter + Login) -->
-    <div class="header-actions">
-      <button class="icon-btn" id="themeToggleBtn" title="Dark/Light Mode">🌙</button>
+    <!-- Top Row: Logo + PC Search + Actions -->
+    <div class="header-top-row">
+      <a href="#" class="logo">
+        <img src="assets/images/logo.png" alt="Private Offer Share" class="logo-img">
+        <span class="logo-text">Private Offer <em>Share</em></span>
+      </a>
       
-      <!-- Source Filter Dropdown -->
-      <div class="source-filter-dropdown">
-        <button class="icon-btn" id="sourceFilterBtn" title="প্রোডাক্ট সোর্স ফিল্টার">
-          <i class="fas fa-filter"></i>
-        </button>
-        <div class="source-filter-menu" id="sourceFilterMenu">
-          <div class="source-filter-header">প্রোডাক্ট সোর্স</div>
-          <div id="sourceFilterList"></div>
-        </div>
+      <!-- PC Search Bar (শুধু PC তে দেখা যাবে) -->
+      <div class="search-bar search-bar-pc">
+        <i class="fas fa-search" style="color:var(--text-muted); margin-right:0.5rem; flex-shrink:0;"></i>
+        <input type="text" id="searchInputPC" placeholder="প্রোডাক্ট খুঁজুন...">
       </div>
       
-      <button class="btn btn-primary" id="loginBtnHeader" onclick="openAuthModal('login')">Login</button>
-      <button class="icon-btn" id="userBtnHeader" style="display:none;" onclick="logout()" title="Logout">
-        <i class="fas fa-user"></i>
-      </button>
+      <div class="header-actions">
+        <button class="icon-btn" id="themeToggleBtn" title="Dark/Light Mode">🌙</button>
+        
+        <!-- Source Filter Dropdown -->
+        <div class="source-filter-dropdown">
+          <button class="icon-btn" id="sourceFilterBtn" title="প্রোডাক্ট সোর্স ফিল্টার">
+            <i class="fas fa-filter"></i>
+          </button>
+          <div class="source-filter-menu" id="sourceFilterMenu">
+            <div class="source-filter-header">প্রোডাক্ট সোর্স</div>
+            <div id="sourceFilterList"></div>
+          </div>
+        </div>
+        
+        <button class="btn btn-primary" id="loginBtnHeader" onclick="openAuthModal('login')">Login</button>
+        <button class="icon-btn" id="userBtnHeader" style="display:none;" onclick="logout()" title="Logout">
+          <i class="fas fa-user"></i>
+        </button>
+      </div>
     </div>
     
-    <!-- Search Bar (মোবাইলে আলাদা লাইনে যাবে) -->
-    <div class="search-bar">
-      <i class="fas fa-search" style="color:var(--text-muted); margin-right:0.5rem;"></i>
-      <input type="text" id="searchInput" placeholder="প্রোডাক্ট খুঁজুন...">
+    <!-- Mobile Search Bar (শুধু মোবাইলে দেখা যাবে) -->
+    <div class="header-search-row">
+      <div class="search-bar search-bar-mobile">
+        <i class="fas fa-search" style="color:var(--text-muted); margin-right:0.5rem; flex-shrink:0;"></i>
+        <input type="text" id="searchInputMobile" placeholder="প্রোডাক্ট খুঁজুন...">
+      </div>
     </div>
   </div>
 </header>
@@ -76,7 +82,7 @@
   </div>
 </section>
 
-<!-- ============ SOURCE TABS (নতুন) ============ -->
+<!-- ============ SOURCE TABS ============ -->
 <nav class="source-tabs" id="sourceTabs"></nav>
 
 <!-- ============ CATEGORIES ============ -->
@@ -150,22 +156,13 @@
         <label>Password</label>
         <input type="password" id="passwordInput" placeholder="••••••••">
       </div>
-      <div class="form-group" id="phoneField" style="display:none;">
-        <label>ফোন নম্বর (Country Code সহ)</label>
-        <input type="tel" id="phoneInput" placeholder="+8801XXXXXXXXX">
-      </div>
-      <div class="form-group" id="otpField" style="display:none;">
-        <label>OTP Code</label>
-        <input type="text" id="otpInput" placeholder="৬ ডিজিটের কোড">
-      </div>
-      <div id="recaptcha-container"></div>
       <button type="submit" class="btn btn-primary auth-submit" id="authSubmitBtn">লগইন করুন</button>
       <div class="auth-error" id="authError"></div>
     </form>
   </div>
 </div>
 
-<!-- ============ COD ORDER MODAL (নতুন - ক্যাশ অন ডেলিভারি) ============ -->
+<!-- ============ COD ORDER MODAL ============ -->
 <div class="modal-overlay" id="codModalOverlay">
   <div class="modal-box cod-modal">
     <button class="modal-close" onclick="closeCodModal()">&times;</button>
